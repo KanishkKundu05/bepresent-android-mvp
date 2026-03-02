@@ -78,9 +78,9 @@ fun HomeV2Screen(
                 if (uiState.screenState == HomeScreenState.Idle) {
                     HomeDateCarousel(
                         days = uiState.days,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(40.dp))
                 }
 
                 // Main card — state-switched

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -39,30 +41,33 @@ data class DayUiModel(
 )
 
 // Arc transform arrays matching iOS exactly
-private val arcHorizontalPadding = listOf(6, 5, 2, 2, 2, 5, 6)
-private val arcYOffset = listOf(40, 15, 0, 0, 0, 15, 40)
-private val arcRotation = listOf(-18f, -15f, -10f, 0f, 10f, 15f, 18f)
+private val arcYOffset = listOf(28, 10, 0, 0, 0, 10, 28)
+private val arcRotation = listOf(-14f, -10f, -5f, 0f, 5f, 10f, 14f)
 
 @Composable
 fun HomeDateCarousel(
     days: List<DayUiModel>,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+            .clipToBounds(),
+        contentAlignment = Alignment.Center
     ) {
-        days.forEachIndexed { index, day ->
-            CalendarDayCell(
-                day = day,
-                modifier = Modifier
-                    .padding(horizontal = arcHorizontalPadding.getOrElse(index) { 0 }.dp)
-                    .offset(y = arcYOffset.getOrElse(index) { 0 }.dp)
-                    .rotate(arcRotation.getOrElse(index) { 0f })
-            )
+        Row(
+            modifier = Modifier.wrapContentWidth(unbounded = true),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            days.forEachIndexed { index, day ->
+                CalendarDayCell(
+                    day = day,
+                    modifier = Modifier
+                        .offset(y = arcYOffset.getOrElse(index) { 0 }.dp)
+                        .rotate(arcRotation.getOrElse(index) { 0f })
+                )
+            }
         }
     }
 }
@@ -88,29 +93,29 @@ private fun CalendarDayCell(
         modifier = modifier
             .clip(CircleShape)
             .background(bgColor)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = day.weekDay,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             color = textColor.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = day.number,
-            fontSize = 14.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = textColor,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-        // Status indicator (40% larger)
+        // Status indicator
         Box(
-            modifier = Modifier.size(25.dp),
+            modifier = Modifier.size(36.dp),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -118,7 +123,7 @@ private fun CalendarDayCell(
                 day.isFailed && day.isEnabled -> {
                     Box(
                         modifier = Modifier
-                            .size(25.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(HomeV2Tokens.DangerPrimary),
                         contentAlignment = Alignment.Center
@@ -126,7 +131,7 @@ private fun CalendarDayCell(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Below goal",
-                            modifier = Modifier.size(17.dp),
+                            modifier = Modifier.size(22.dp),
                             tint = Color.White
                         )
                     }
@@ -135,7 +140,7 @@ private fun CalendarDayCell(
                 day.isChecked && day.isEnabled -> {
                     Box(
                         modifier = Modifier
-                            .size(25.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(HomeV2Tokens.GreenPrimary),
                         contentAlignment = Alignment.Center
@@ -143,16 +148,16 @@ private fun CalendarDayCell(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Completed",
-                            modifier = Modifier.size(17.dp),
+                            modifier = Modifier.size(22.dp),
                             tint = Color.White
                         )
                     }
                 }
-                // Future dates → grey tick
+                // Future dates → greyed out tick
                 !day.isEnabled -> {
                     Box(
                         modifier = Modifier
-                            .size(25.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(HomeV2Tokens.NeutralWhite.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
@@ -160,7 +165,7 @@ private fun CalendarDayCell(
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Future",
-                            modifier = Modifier.size(17.dp),
+                            modifier = Modifier.size(22.dp),
                             tint = HomeV2Tokens.NeutralWhite.copy(alpha = 0.35f)
                         )
                     }
@@ -169,7 +174,7 @@ private fun CalendarDayCell(
                 else -> {
                     Box(
                         modifier = Modifier
-                            .size(25.dp)
+                            .size(36.dp)
                             .clip(CircleShape)
                             .background(
                                 if (day.isCurrentDay) HomeV2Tokens.Neutral200
