@@ -95,6 +95,60 @@ export const syncSession = mutation({
 });
 
 /**
+ * Sync app usage data (idempotent upsert by userId + packageName + date).
+ */
+export const syncAppUsage = mutation({
+  args: {
+    entries: v.array(
+      v.object({
+        date: v.string(),
+        packageName: v.string(),
+        appName: v.string(),
+        totalTimeMs: v.number(),
+        openCount: v.number(),
+      })
+    ),
+  },
+  handler: async (ctx, { entries }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_externalId", (q) => q.eq("externalId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    for (const entry of entries) {
+      const existing = await ctx.db
+        .query("appUsageDaily")
+        .withIndex("by_user_package_date", (q) =>
+          q
+            .eq("userId", user._id)
+            .eq("packageName", entry.packageName)
+            .eq("date", entry.date)
+        )
+        .unique();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          appName: entry.appName,
+          totalTimeMs: entry.totalTimeMs,
+          openCount: entry.openCount,
+          syncedAt: Date.now(),
+        });
+      } else {
+        await ctx.db.insert("appUsageDaily", {
+          userId: user._id,
+          ...entry,
+          syncedAt: Date.now(),
+        });
+      }
+    }
+  },
+});
+
+/**
  * Sync intention snapshots (upsert by userId + packageName).
  */
 export const syncIntentions = mutation({

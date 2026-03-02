@@ -1,5 +1,6 @@
 package com.bepresent.android.data.convex
 
+import android.content.Context
 import android.util.Log
 import com.bepresent.android.data.db.AppIntentionDao
 import com.bepresent.android.data.db.PresentSession
@@ -7,6 +8,8 @@ import com.bepresent.android.data.db.PresentSessionDao
 import com.bepresent.android.data.db.SyncQueueDao
 import com.bepresent.android.data.db.SyncQueueItem
 import com.bepresent.android.data.datastore.PreferencesManager
+import com.bepresent.android.data.usage.UsageStatsRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -17,11 +20,13 @@ import javax.inject.Singleton
 
 @Singleton
 class SyncManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val syncQueueDao: SyncQueueDao,
     private val sessionDao: PresentSessionDao,
     private val intentionDao: AppIntentionDao,
     private val preferencesManager: PreferencesManager,
-    private val convexManager: ConvexManager
+    private val convexManager: ConvexManager,
+    private val usageStatsRepository: UsageStatsRepository
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -69,6 +74,33 @@ class SyncManager @Inject constructor(
         syncQueueDao.insert(
             SyncQueueItem(
                 type = SyncQueueItem.TYPE_DAILY_STATS,
+                payload = json.encodeToString(payload)
+            )
+        )
+    }
+
+    suspend fun enqueueAppUsageSync() {
+        val dailyUsage = usageStatsRepository.getDailyAppUsage(7)
+        val pm = context.packageManager
+        val entries = dailyUsage.map { usage ->
+            val appName = try {
+                val ai = pm.getApplicationInfo(usage.packageName, 0)
+                pm.getApplicationLabel(ai).toString()
+            } catch (_: Exception) {
+                usage.packageName
+            }
+            AppUsageSyncEntry(
+                date = usage.date,
+                packageName = usage.packageName,
+                appName = appName,
+                totalTimeMs = usage.totalTimeMs,
+                openCount = usage.openCount
+            )
+        }
+        val payload = AppUsageSyncPayload(entries = entries)
+        syncQueueDao.insert(
+            SyncQueueItem(
+                type = SyncQueueItem.TYPE_APP_USAGE,
                 payload = json.encodeToString(payload)
             )
         )
@@ -153,6 +185,24 @@ class SyncManager @Inject constructor(
                         client.mutation<Unit>(
                             "stats:syncIntentions",
                             args = mapOf("intentions" to intentionMaps)
+                        )
+                        syncQueueDao.delete(item)
+                    }
+
+                    SyncQueueItem.TYPE_APP_USAGE -> {
+                        val payload = json.decodeFromString<AppUsageSyncPayload>(item.payload)
+                        val entryMaps = payload.entries.map { e ->
+                            mapOf(
+                                "date" to e.date,
+                                "packageName" to e.packageName,
+                                "appName" to e.appName,
+                                "totalTimeMs" to e.totalTimeMs,
+                                "openCount" to e.openCount
+                            )
+                        }
+                        client.mutation<Unit>(
+                            "stats:syncAppUsage",
+                            args = mapOf("entries" to entryMaps)
                         )
                         syncQueueDao.delete(item)
                     }

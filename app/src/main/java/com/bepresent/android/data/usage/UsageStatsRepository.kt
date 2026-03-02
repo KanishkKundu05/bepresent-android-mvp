@@ -5,6 +5,10 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import com.bepresent.android.debug.RuntimeLog
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,6 +16,25 @@ import javax.inject.Singleton
 data class AppUsageInfo(
     val packageName: String,
     val totalTimeMs: Long
+)
+
+data class DailyAppUsage(
+    val date: String,           // "2026-03-01"
+    val packageName: String,
+    val totalTimeMs: Long,
+    val openCount: Int
+)
+
+data class MonthlyAppUsage(
+    val yearMonth: String,      // "2026-03"
+    val packageName: String,
+    val totalTimeMs: Long
+)
+
+data class AppOpenEvent(
+    val packageName: String,
+    val timestamp: Long,
+    val durationMs: Long?       // null if still in foreground
 )
 
 @Singleton
@@ -73,6 +96,147 @@ class UsageStatsRepository @Inject constructor(
             RuntimeLog.w(TAG, "detectForeground: no foreground app detected in 10s window")
         }
         return result
+    }
+
+    /**
+     * Per-app open counts + screen time for each of the last [days] days.
+     * Uses queryEvents() to count ACTIVITY_RESUMED events and track foreground time.
+     */
+    fun getDailyAppUsage(days: Int = 7): List<DailyAppUsage> {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now()
+        val startDate = today.minusDays(days.toLong() - 1)
+        val startMs = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMs = System.currentTimeMillis()
+
+        val events = usageStatsManager.queryEvents(startMs, endMs)
+        val event = UsageEvents.Event()
+
+        // Track per-day, per-package: open count and foreground spans
+        data class DayPackageKey(val date: String, val pkg: String)
+        val openCounts = mutableMapOf<DayPackageKey, Int>()
+        val foregroundTime = mutableMapOf<DayPackageKey, Long>()
+        // Track when each package moved to foreground
+        val foregroundStart = mutableMapOf<String, Long>()
+
+        val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            val eventDate = java.time.Instant.ofEpochMilli(event.timeStamp)
+                .atZone(zone).toLocalDate().format(dateFormatter)
+            val key = DayPackageKey(eventDate, event.packageName)
+
+            when (event.eventType) {
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    openCounts[key] = (openCounts[key] ?: 0) + 1
+                    foregroundStart[event.packageName] = event.timeStamp
+                }
+                UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    val start = foregroundStart.remove(event.packageName)
+                    if (start != null) {
+                        val duration = event.timeStamp - start
+                        if (duration > 0) {
+                            foregroundTime[key] = (foregroundTime[key] ?: 0L) + duration
+                        }
+                    }
+                }
+            }
+        }
+
+        // Close any still-in-foreground spans at current time
+        for ((pkg, start) in foregroundStart) {
+            val nowDate = today.format(dateFormatter)
+            val key = DayPackageKey(nowDate, pkg)
+            val duration = endMs - start
+            if (duration > 0) {
+                foregroundTime[key] = (foregroundTime[key] ?: 0L) + duration
+            }
+        }
+
+        val allKeys = openCounts.keys + foregroundTime.keys
+        return allKeys.distinct().map { key ->
+            DailyAppUsage(
+                date = key.date,
+                packageName = key.pkg,
+                totalTimeMs = foregroundTime[key] ?: 0L,
+                openCount = openCounts[key] ?: 0
+            )
+        }.sortedWith(compareBy({ it.date }, { -it.totalTimeMs }))
+    }
+
+    /**
+     * Per-app monthly totals for the last [months] months.
+     * Uses INTERVAL_MONTHLY for efficient aggregation.
+     */
+    fun getMonthlyAppUsage(months: Int = 6): List<MonthlyAppUsage> {
+        val zone = ZoneId.systemDefault()
+        val startMonth = YearMonth.now().minusMonths(months.toLong() - 1)
+        val startMs = startMonth.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMs = System.currentTimeMillis()
+
+        val stats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_MONTHLY, startMs, endMs
+        )
+
+        return stats
+            .filter { it.totalTimeInForeground > 0 }
+            .map { stat ->
+                val yearMonth = java.time.Instant.ofEpochMilli(stat.firstTimeStamp)
+                    .atZone(zone).toLocalDate().let { YearMonth.from(it) }
+                MonthlyAppUsage(
+                    yearMonth = yearMonth.toString(), // "2026-03"
+                    packageName = stat.packageName,
+                    totalTimeMs = stat.totalTimeInForeground
+                )
+            }
+            .sortedWith(compareBy({ it.yearMonth }, { -it.totalTimeMs }))
+    }
+
+    /**
+     * Exact app-open events with timestamps for the last [days] days.
+     * Pairs ACTIVITY_RESUMED with ACTIVITY_PAUSED to compute duration.
+     */
+    fun getAppOpenEvents(days: Int = 3): List<AppOpenEvent> {
+        val zone = ZoneId.systemDefault()
+        val startMs = LocalDate.now().minusDays(days.toLong())
+            .atStartOfDay(zone).toInstant().toEpochMilli()
+        val endMs = System.currentTimeMillis()
+
+        val events = usageStatsManager.queryEvents(startMs, endMs)
+        val event = UsageEvents.Event()
+
+        // Track foreground start per package
+        val foregroundStart = mutableMapOf<String, Long>()
+        val result = mutableListOf<AppOpenEvent>()
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            when (event.eventType) {
+                UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    foregroundStart[event.packageName] = event.timeStamp
+                }
+                UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    val start = foregroundStart.remove(event.packageName)
+                    if (start != null) {
+                        result.add(
+                            AppOpenEvent(
+                                packageName = event.packageName,
+                                timestamp = start,
+                                durationMs = event.timeStamp - start
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // Add still-in-foreground apps with null duration
+        for ((pkg, start) in foregroundStart) {
+            result.add(AppOpenEvent(packageName = pkg, timestamp = start, durationMs = null))
+        }
+
+        return result.sortedByDescending { it.timestamp }
     }
 
     companion object {

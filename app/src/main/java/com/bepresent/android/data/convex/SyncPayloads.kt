@@ -36,3 +36,17 @@ data class IntentionSnapshotPayload(
 data class IntentionsSyncPayload(
     val intentions: List<IntentionSnapshotPayload>
 )
+
+@Serializable
+data class AppUsageSyncEntry(
+    val date: String,
+    val packageName: String,
+    val appName: String,
+    val totalTimeMs: Long,
+    val openCount: Int
+)
+
+@Serializable
+data class AppUsageSyncPayload(
+    val entries: List<AppUsageSyncEntry>
+)

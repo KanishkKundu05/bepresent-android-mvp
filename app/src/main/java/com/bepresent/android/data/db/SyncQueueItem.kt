@@ -16,5 +16,6 @@ data class SyncQueueItem(
         const val TYPE_SESSION = "session"
         const val TYPE_DAILY_STATS = "dailyStats"
         const val TYPE_INTENTIONS = "intentions"
+        const val TYPE_APP_USAGE = "appUsage"
     }
 }

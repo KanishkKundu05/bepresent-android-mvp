@@ -69,4 +69,16 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_user_phone", ["userId", "phoneNumber"]),
+
+  appUsageDaily: defineTable({
+    userId: v.id("users"),
+    date: v.string(),             // "2026-03-01"
+    packageName: v.string(),
+    appName: v.string(),
+    totalTimeMs: v.number(),
+    openCount: v.number(),
+    syncedAt: v.number(),
+  })
+    .index("by_user_date", ["userId", "date"])
+    .index("by_user_package_date", ["userId", "packageName", "date"]),
 });
