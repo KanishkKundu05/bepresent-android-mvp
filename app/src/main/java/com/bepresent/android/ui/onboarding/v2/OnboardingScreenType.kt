@@ -68,7 +68,7 @@ val OnboardingScreenType.buttonConfig: ButtonConfig
         is OnboardingScreenType.ShockPage2 -> ButtonConfig.Full
         is OnboardingScreenType.Rating -> ButtonConfig.Hidden
         is OnboardingScreenType.PermissionsSetup -> ButtonConfig.Hidden
-        is OnboardingScreenType.NotificationPermission -> ButtonConfig.Full
+        is OnboardingScreenType.NotificationPermission -> ButtonConfig.Hidden
         is OnboardingScreenType.SevenDayChallenge -> ButtonConfig.Hidden
         is OnboardingScreenType.PostPaywallMessage -> ButtonConfig.Full
         is OnboardingScreenType.ChooseUsername -> ButtonConfig.Hidden

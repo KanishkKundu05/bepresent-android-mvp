@@ -138,7 +138,9 @@ private fun ScreenRouter(
         is OnboardingScreenType.PermissionsSetup -> PermissionsSetupScreen(
             onComplete = { viewModel.advance() }
         )
-        is OnboardingScreenType.NotificationPermission -> NotificationPermissionScreen()
+        is OnboardingScreenType.NotificationPermission -> NotificationPermissionScreen(
+            onComplete = { viewModel.advance() }
+        )
         is OnboardingScreenType.SevenDayChallenge -> SevenDayChallengeScreen(
             yearsOnPhone = viewModel.yearsOnPhone,
             onAccepted = { viewModel.advance() }

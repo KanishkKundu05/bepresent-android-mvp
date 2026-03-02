@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,25 +24,20 @@ import androidx.compose.ui.unit.dp
 import com.bepresent.android.R
 import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
 import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
+import com.bepresent.android.ui.onboarding.v2.components.OnboardingContinueButton
+import com.bepresent.android.ui.onboarding.v2.components.OnboardingButtonAppearance
 
 /**
- * Notification permission screen. On API 33+ requests POST_NOTIFICATIONS,
- * otherwise this is a no-op (the outer button just advances).
- *
- * The button that triggers this is the OnboardingContinueButton in OnboardingV2Screen
- * (buttonConfig == Full, buttonTitle == "Enable Notifications").
- * We augment it with the permission launcher here via a side-effect.
+ * Notification permission screen. On API 33+ requests POST_NOTIFICATIONS
+ * when the user taps "Enable Notifications". Below API 33 it advances directly.
  */
 @Composable
-fun NotificationPermissionScreen() {
-    // The actual permission request is triggered by the parent's Continue button.
-    // On screens where buttonConfig == Full, the parent calls viewModel.advance().
-    // We register the launcher here so it's composed, and trigger it from LaunchedEffect
-    // when this screen first appears on API 33+.
-
+fun NotificationPermissionScreen(onComplete: () -> Unit) {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* granted or denied — either way we'll advance via the Continue button */ }
+    ) { /* granted or denied — advance either way */
+        onComplete()
+    }
 
     Column(
         modifier = Modifier
@@ -81,14 +77,27 @@ fun NotificationPermissionScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // The Continue button in the parent will trigger advance().
-        // We request the permission here when the user taps it.
-        // This is handled by the parent's onClick wiring; but we also
-        // proactively request if on API 33+ when the screen loads.
-        androidx.compose.runtime.LaunchedEffect(Unit) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+        OnboardingContinueButton(
+            title = "Enable Notifications",
+            appearance = OnboardingButtonAppearance.Primary,
+            onClick = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    onComplete()
+                }
+            },
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        TextButton(onClick = onComplete) {
+            Text(
+                "Maybe Later",
+                style = OnboardingTypography.label,
+                color = OnboardingTokens.Neutral800
+            )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
