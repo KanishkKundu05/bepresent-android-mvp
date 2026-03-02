@@ -25,9 +25,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
@@ -44,6 +46,7 @@ fun SlideToConfirmButton(
     onComplete: () -> Unit
 ) {
     val density = LocalDensity.current
+    val haptic = LocalHapticFeedback.current
     val thumbSizeDp = 56.dp
     val thumbSizePx = with(density) { thumbSizeDp.toPx() }
     val horizontalPaddingPx = with(density) { 4.dp.toPx() }
@@ -51,6 +54,8 @@ fun SlideToConfirmButton(
     var trackWidthPx by remember { mutableFloatStateOf(0f) }
     var dragProgress by remember { mutableFloatStateOf(0f) }
     var isCompleted by remember { mutableStateOf(false) }
+    // Track the last 10% tick so we fire haptics at each 10% step
+    var lastTickStep by remember { mutableStateOf(0) }
 
     val animatedProgress by animateFloatAsState(
         targetValue = dragProgress,
@@ -104,13 +109,16 @@ fun SlideToConfirmButton(
                             if (dragProgress >= COMPLETION_THRESHOLD) {
                                 dragProgress = 1f
                                 isCompleted = true
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onComplete()
                             } else {
                                 dragProgress = 0f
+                                lastTickStep = 0
                             }
                         },
                         onDragCancel = {
                             dragProgress = 0f
+                            lastTickStep = 0
                         },
                         onHorizontalDrag = { _, dragAmount ->
                             val maxDrag = (trackWidthPx - thumbPx - padPx * 2)
@@ -118,6 +126,12 @@ fun SlideToConfirmButton(
                             if (maxDrag > 0) {
                                 val delta = dragAmount / maxDrag
                                 dragProgress = (dragProgress + delta).coerceIn(0f, 1f)
+                                // Tick haptic every 10% of progress
+                                val currentStep = (dragProgress * 10).toInt()
+                                if (currentStep != lastTickStep) {
+                                    lastTickStep = currentStep
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
                             }
                         }
                     )
