@@ -70,6 +70,20 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_user_phone", ["userId", "phoneNumber"]),
 
+  subscriptions: defineTable({
+    deviceId: v.string(),
+    userId: v.optional(v.id("users")),
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.string(),
+    status: v.string(), // "active" | "past_due" | "canceled" | "incomplete"
+    priceId: v.string(),
+    currentPeriodEnd: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_deviceId", ["deviceId"])
+    .index("by_stripeSubscriptionId", ["stripeSubscriptionId"])
+    .index("by_userId", ["userId"]),
+
   appUsageDaily: defineTable({
     userId: v.id("users"),
     date: v.string(),             // "2026-03-01"

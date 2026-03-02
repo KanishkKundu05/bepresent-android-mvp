@@ -12,6 +12,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,6 +37,12 @@ class PreferencesManager @Inject constructor(
         val ONBOARDING_V2_PROGRESS = intPreferencesKey("onboarding_v2_progress")
         val ONBOARDING_V2_ANSWERS = stringPreferencesKey("onboarding_v2_answers")
         val ONBOARDING_V2_USERNAME = stringPreferencesKey("onboarding_v2_username")
+
+        // Subscription
+        val SUBSCRIPTION_ACTIVE = booleanPreferencesKey("subscription_active")
+        val SUBSCRIPTION_EXPIRY = stringPreferencesKey("subscription_expiry")
+        val STRIPE_CUSTOMER_ID = stringPreferencesKey("stripe_customer_id")
+        val DEVICE_UUID = stringPreferencesKey("device_uuid")
     }
 
     // Flows
@@ -116,5 +123,35 @@ class PreferencesManager @Inject constructor(
             prefs.remove(Keys.ONBOARDING_V2_ANSWERS)
             prefs.remove(Keys.ONBOARDING_V2_USERNAME)
         }
+    }
+
+    // ── Subscription ──
+
+    suspend fun setSubscriptionActive(active: Boolean) {
+        dataStore.edit { it[Keys.SUBSCRIPTION_ACTIVE] = active }
+    }
+
+    suspend fun getSubscriptionActiveOnce(): Boolean {
+        return dataStore.data.first()[Keys.SUBSCRIPTION_ACTIVE] ?: false
+    }
+
+    suspend fun setSubscriptionExpiry(expiry: String) {
+        dataStore.edit { it[Keys.SUBSCRIPTION_EXPIRY] = expiry }
+    }
+
+    suspend fun setStripeCustomerId(customerId: String) {
+        dataStore.edit { it[Keys.STRIPE_CUSTOMER_ID] = customerId }
+    }
+
+    suspend fun getStripeCustomerIdOnce(): String? {
+        return dataStore.data.first()[Keys.STRIPE_CUSTOMER_ID]
+    }
+
+    suspend fun getOrCreateDeviceUuid(): String {
+        val existing = dataStore.data.first()[Keys.DEVICE_UUID]
+        if (existing != null) return existing
+        val uuid = UUID.randomUUID().toString()
+        dataStore.edit { it[Keys.DEVICE_UUID] = uuid }
+        return uuid
     }
 }

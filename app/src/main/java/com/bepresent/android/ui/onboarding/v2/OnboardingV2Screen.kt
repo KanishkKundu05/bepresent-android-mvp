@@ -148,6 +148,9 @@ private fun ScreenRouter(
             yearsOnPhone = viewModel.yearsOnPhone,
             onAccepted = { viewModel.advance() }
         )
+        is OnboardingScreenType.Paywall -> PaywallScreen(
+            onSubscribed = { viewModel.advance() }
+        )
         is OnboardingScreenType.PostPaywallMessage -> PostPaywallMessageScreen(
             message = screen.message
         )

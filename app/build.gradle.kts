@@ -30,6 +30,7 @@ android {
         buildConfigField("String", "CONVEX_URL", "\"${project.findProperty("CONVEX_URL") ?: ""}\"")
         buildConfigField("String", "AUTH0_CLIENT_ID", "\"${project.findProperty("AUTH0_CLIENT_ID") ?: ""}\"")
         buildConfigField("String", "AUTH0_DOMAIN", "\"${project.findProperty("AUTH0_DOMAIN") ?: ""}\"")
+        buildConfigField("String", "STRIPE_PUBLISHABLE_KEY", "\"${project.findProperty("STRIPE_PUBLISHABLE_KEY") ?: ""}\"")
 
         manifestPlaceholders["AUTH0_DOMAIN"] = project.findProperty("AUTH0_DOMAIN") ?: "placeholder.auth0.com"
     }
@@ -129,6 +130,9 @@ dependencies {
 
     // Lottie
     implementation("com.airbnb.android:lottie-compose:6.3.0")
+
+    // Stripe
+    implementation("com.stripe:stripe-android:20.48.3")
 
     // Convex
     implementation("dev.convex:android-convexmobile:0.4.1")
