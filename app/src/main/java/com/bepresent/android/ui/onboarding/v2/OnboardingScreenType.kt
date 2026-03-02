@@ -21,6 +21,7 @@ sealed class OnboardingScreenType {
     data object ShockPage2 : OnboardingScreenType()
     data object Rating : OnboardingScreenType()
     data object PermissionsSetup : OnboardingScreenType()
+    data object SuggestedIntention : OnboardingScreenType()
     data object NotificationPermission : OnboardingScreenType()
     data object SevenDayChallenge : OnboardingScreenType()
     data class PostPaywallMessage(val message: String) : OnboardingScreenType()
@@ -68,6 +69,7 @@ val OnboardingScreenType.buttonConfig: ButtonConfig
         is OnboardingScreenType.ShockPage2 -> ButtonConfig.Full
         is OnboardingScreenType.Rating -> ButtonConfig.Hidden
         is OnboardingScreenType.PermissionsSetup -> ButtonConfig.Hidden
+        is OnboardingScreenType.SuggestedIntention -> ButtonConfig.Hidden
         is OnboardingScreenType.NotificationPermission -> ButtonConfig.Hidden
         is OnboardingScreenType.SevenDayChallenge -> ButtonConfig.Hidden
         is OnboardingScreenType.PostPaywallMessage -> ButtonConfig.Full
@@ -107,6 +109,7 @@ val OnboardingScreenType.gradientType: GradientType
         is OnboardingScreenType.ShockPage2 -> GradientType.White
         is OnboardingScreenType.Rating -> GradientType.Blue
         is OnboardingScreenType.PermissionsSetup -> GradientType.White
+        is OnboardingScreenType.SuggestedIntention -> GradientType.White
         is OnboardingScreenType.NotificationPermission -> GradientType.White
         is OnboardingScreenType.SevenDayChallenge -> GradientType.White
         is OnboardingScreenType.PostPaywallMessage -> GradientType.Blue
@@ -170,6 +173,7 @@ fun buildOnboardingScreens(): List<OnboardingScreenType> = listOf(
     OnboardingScreenType.ShockPage2,
     OnboardingScreenType.Rating,
     OnboardingScreenType.PermissionsSetup,
+    OnboardingScreenType.SuggestedIntention,
     OnboardingScreenType.NotificationPermission,
     OnboardingScreenType.SevenDayChallenge,
     OnboardingScreenType.PostPaywallMessage(

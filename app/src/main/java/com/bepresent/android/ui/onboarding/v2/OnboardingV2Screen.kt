@@ -138,6 +138,9 @@ private fun ScreenRouter(
         is OnboardingScreenType.PermissionsSetup -> PermissionsSetupScreen(
             onComplete = { viewModel.advance() }
         )
+        is OnboardingScreenType.SuggestedIntention -> SuggestedIntentionScreen(
+            onComplete = { viewModel.advance() }
+        )
         is OnboardingScreenType.NotificationPermission -> NotificationPermissionScreen(
             onComplete = { viewModel.advance() }
         )

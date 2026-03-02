@@ -38,6 +38,16 @@ class UsageStatsRepository @Inject constructor(
             .sortedByDescending { it.totalTimeMs }
     }
 
+    fun getTopDistractingApp(): AppUsageInfo? {
+        val now = System.currentTimeMillis()
+        val weekAgo = now - 7 * 24 * 60 * 60 * 1000L
+        val aggregated = usageStatsManager.queryAndAggregateUsageStats(weekAgo, now)
+        return aggregated.values
+            .filter { it.packageName in KNOWN_DISTRACTING_APPS && it.totalTimeInForeground > 0 }
+            .maxByOrNull { it.totalTimeInForeground }
+            ?.let { AppUsageInfo(it.packageName, it.totalTimeInForeground) }
+    }
+
     fun detectForegroundApp(): String? {
         val endTime = System.currentTimeMillis()
         val beginTime = endTime - 10_000
@@ -67,6 +77,16 @@ class UsageStatsRepository @Inject constructor(
 
     companion object {
         private const val TAG = "BP_Usage"
+
+        val KNOWN_DISTRACTING_APPS = setOf(
+            "com.instagram.android",
+            "com.zhiliaoapp.musically",    // TikTok
+            "com.twitter.android",          // X/Twitter
+            "com.google.android.youtube",
+            "com.reddit.frontpage",
+            "com.snapchat.android",
+            "com.facebook.katana"
+        )
     }
 
     private fun getCurrentForegroundPackage(): String? {
