@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,43 +43,39 @@ fun SuggestedIntentionScreen(
 
     var showConfigSheet by remember { mutableStateOf(false) }
 
-    // Auto-skip if no distracting app found
-    LaunchedEffect(isLoaded, topApp) {
-        if (isLoaded && topApp == null) {
-            onComplete()
-        }
-    }
+    val app = topApp
 
-    val app = topApp ?: return
-
-    // Resolve app label and icon from PackageManager
-    val appLabel = remember(app.packageName) {
+    // Resolve app label and icon from PackageManager when we have a suggested app
+    val appLabel = remember(app?.packageName) {
+        val pkg = app?.packageName ?: return@remember null
         try {
-            val ai = context.packageManager.getApplicationInfo(app.packageName, 0)
+            val ai = context.packageManager.getApplicationInfo(pkg, 0)
             context.packageManager.getApplicationLabel(ai).toString()
         } catch (_: Exception) {
-            app.packageName.substringAfterLast('.')
-                .replaceFirstChar { it.uppercase() }
+            pkg.substringAfterLast('.').replaceFirstChar { it.uppercase() }
         }
     }
-    val appIcon = remember(app.packageName) {
+    val appIcon = remember(app?.packageName) {
+        val pkg = app?.packageName ?: return@remember null
         try {
-            context.packageManager.getApplicationIcon(app.packageName)
+            context.packageManager.getApplicationIcon(pkg)
                 .toBitmap(80, 80).asImageBitmap()
         } catch (_: Exception) {
             null
         }
     }
 
-    val weeklyHours = app.totalTimeMs / (1000 * 60 * 60)
-    val weeklyMinutes = (app.totalTimeMs / (1000 * 60)) % 60
-    val timeText = when {
-        weeklyHours > 0 -> "${weeklyHours}h ${weeklyMinutes}m"
-        else -> "${weeklyMinutes}m"
+    val timeText = app?.let {
+        val weeklyHours = it.totalTimeMs / (1000 * 60 * 60)
+        val weeklyMinutes = (it.totalTimeMs / (1000 * 60)) % 60
+        when {
+            weeklyHours > 0 -> "${weeklyHours}h ${weeklyMinutes}m"
+            else -> "${weeklyMinutes}m"
+        }
     }
 
     AnimatedVisibility(
-        visible = isLoaded && topApp != null,
+        visible = isLoaded,
         enter = fadeIn()
     ) {
         Column(
@@ -91,33 +86,57 @@ fun SuggestedIntentionScreen(
         ) {
             Spacer(modifier = Modifier.height(80.dp))
 
-            // App icon
-            if (appIcon != null) {
+            if (app != null && appIcon != null) {
+                // App icon
                 Image(
                     bitmap = appIcon,
                     contentDescription = appLabel,
                     modifier = Modifier.size(80.dp)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
+
+                // "You spent Xh on Instagram this week"
+                Text(
+                    text = "You spent $timeText on $appLabel\nthis week",
+                    style = OnboardingTypography.h2,
+                    color = OnboardingTokens.NeutralBlack,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Set your first intention to\nuse it more mindfully",
+                    style = OnboardingTypography.p3,
+                    color = OnboardingTokens.Neutral800,
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                // No suggested app — show generic prompt
+                Text(
+                    text = "\uD83C\uDFAF",
+                    style = OnboardingTypography.h1,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Set your first intention",
+                    style = OnboardingTypography.h2,
+                    color = OnboardingTokens.NeutralBlack,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Choose an app you'd like to\nuse more mindfully",
+                    style = OnboardingTypography.p3,
+                    color = OnboardingTokens.Neutral800,
+                    textAlign = TextAlign.Center
+                )
             }
-
-            // "You spent Xh on Instagram this week"
-            Text(
-                text = "You spent $timeText on $appLabel\nthis week",
-                style = OnboardingTypography.h2,
-                color = OnboardingTokens.NeutralBlack,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Subtitle
-            Text(
-                text = "Set your first intention to\nuse it more mindfully",
-                style = OnboardingTypography.p3,
-                color = OnboardingTokens.Neutral800,
-                textAlign = TextAlign.Center
-            )
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -143,16 +162,18 @@ fun SuggestedIntentionScreen(
         }
     }
 
-    // Intention config sheet — pre-filled with the suggested app
+    // Intention config sheet — pre-filled with the suggested app if available
     if (showConfigSheet) {
         IntentionConfigSheet(
-            existingIntention = AppIntention(
-                id = "",
-                packageName = app.packageName,
-                appName = appLabel,
-                allowedOpensPerDay = 10,
-                timePerOpenMinutes = 5
-            ),
+            existingIntention = app?.let {
+                AppIntention(
+                    id = "",
+                    packageName = it.packageName,
+                    appName = appLabel ?: it.packageName,
+                    allowedOpensPerDay = 10,
+                    timePerOpenMinutes = 5
+                )
+            },
             onDismiss = { showConfigSheet = false },
             onSave = { packageName, appName, allowedOpens, timePerOpen ->
                 viewModel.createIntention(packageName, appName, allowedOpens, timePerOpen)

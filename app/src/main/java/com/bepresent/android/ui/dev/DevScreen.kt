@@ -48,6 +48,7 @@ import com.bepresent.android.ui.picker.AppPickerSheet
 @Composable
 fun DevScreen(
     onBack: () -> Unit,
+    onNavigateToOnboarding: () -> Unit = {},
     viewModel: DevViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -147,7 +148,10 @@ fun DevScreen(
                 }
             }
             Button(
-                onClick = { viewModel.resetOnboarding() },
+                onClick = {
+                    viewModel.resetOnboarding()
+                    onNavigateToOnboarding()
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Reset & Show Onboarding")
@@ -164,7 +168,10 @@ fun DevScreen(
                     ) {
                         viewModel.onboardingScreenNames.forEachIndexed { index, name ->
                             OutlinedButton(
-                                onClick = { viewModel.launchOnboardingAtScreen(index) },
+                                onClick = {
+                                    viewModel.launchOnboardingAtScreen(index)
+                                    onNavigateToOnboarding()
+                                },
                                 modifier = Modifier.height(32.dp)
                             ) {
                                 Text(name, style = MaterialTheme.typography.labelSmall)
