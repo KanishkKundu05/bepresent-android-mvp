@@ -81,10 +81,7 @@ class UsageStatsRepository @Inject constructor(
         while (usageEvents.hasNextEvent()) {
             usageEvents.getNextEvent(event)
             eventCount++
-            @Suppress("DEPRECATION")
-            if (event.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND ||
-                event.eventType == UsageEvents.Event.ACTIVITY_RESUMED
-            ) {
+            if (event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
                 lastForegroundPackage = event.packageName
             }
         }
