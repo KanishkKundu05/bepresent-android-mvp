@@ -31,10 +31,8 @@ class UsageStatsRepository @Inject constructor(
 
     fun getPerAppScreenTime(): List<AppUsageInfo> {
         val (startOfDay, now) = getTodayRange()
-        val stats = usageStatsManager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY, startOfDay, now
-        )
-        return stats
+        val aggregated = usageStatsManager.queryAndAggregateUsageStats(startOfDay, now)
+        return aggregated.values
             .filter { it.totalTimeInForeground > 0 }
             .map { AppUsageInfo(it.packageName, it.totalTimeInForeground) }
             .sortedByDescending { it.totalTimeMs }

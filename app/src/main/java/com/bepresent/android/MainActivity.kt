@@ -46,6 +46,10 @@ import com.bepresent.android.ui.leaderboard.LeaderboardScreen
 import com.bepresent.android.ui.onboarding.v2.OnboardingV2Screen
 import com.bepresent.android.ui.partner.PartnerScreen
 import com.bepresent.android.ui.profile.ProfileScreen
+import com.bepresent.android.ui.screentime.ScreenTimeScreen
+import com.bepresent.android.ui.screentime.ScreenTimeViewModel
+import com.bepresent.android.ui.social.SocialScreen
+import com.bepresent.android.ui.social.SocialViewModel
 import com.bepresent.android.ui.theme.BePresentTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -168,14 +172,16 @@ private fun MainAppContent() {
                 )
             }
 
-            // Screen Time tab (placeholder)
+            // Screen Time tab
             composable(BottomTab.ScreenTime.route) {
-                PlaceholderTab(name = "Screen Time")
+                val viewModel: ScreenTimeViewModel = hiltViewModel()
+                ScreenTimeScreen(viewModel = viewModel)
             }
 
-            // Social tab (placeholder)
+            // Social tab — accountability partners
             composable(BottomTab.Social.route) {
-                PlaceholderTab(name = "Social")
+                val viewModel: SocialViewModel = hiltViewModel()
+                SocialScreen(viewModel = viewModel)
             }
 
             // Detail screens (no bottom bar)
