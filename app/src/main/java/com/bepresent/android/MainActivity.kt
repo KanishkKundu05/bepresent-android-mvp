@@ -78,15 +78,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BePresentTheme {
-                val onboardingCompleted by preferencesManager.onboardingCompleted.collectAsState(initial = false)
-
-                val forceOnboarding = false
-
-                if (onboardingCompleted && !forceOnboarding) {
-                    MainAppContent()
-                } else {
-                    OnboardingV2Screen()
-                }
+                // DEV: skip onboarding, go straight to home
+                MainAppContent()
             }
         }
     }
