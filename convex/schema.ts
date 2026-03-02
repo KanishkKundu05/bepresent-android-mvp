@@ -60,4 +60,13 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_code", ["code"]),
+
+  accountabilityPartners: defineTable({
+    userId: v.id("users"),
+    contactName: v.string(),
+    phoneNumber: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_user_phone", ["userId", "phoneNumber"]),
 });

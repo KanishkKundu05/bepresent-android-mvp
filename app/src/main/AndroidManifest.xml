@@ -28,6 +28,9 @@
     <!-- Network for cloud sync -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Contact picker for accountability partners -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <!-- Exact alarms for intention re-block + session goal -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
