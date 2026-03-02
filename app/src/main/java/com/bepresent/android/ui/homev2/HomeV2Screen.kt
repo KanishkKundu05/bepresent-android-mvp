@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -78,9 +79,11 @@ fun HomeV2Screen(
                 if (uiState.screenState == HomeScreenState.Idle) {
                     HomeDateCarousel(
                         days = uiState.days,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                        modifier = Modifier
+                            .padding(top = 8.dp, bottom = 8.dp)
+                            .zIndex(1f)
                     )
-                    Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
 
                 // Main card — state-switched

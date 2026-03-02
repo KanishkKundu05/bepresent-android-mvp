@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -41,8 +40,8 @@ data class DayUiModel(
 )
 
 // Arc transform arrays matching iOS exactly
-private val arcYOffset = listOf(28, 10, 0, 0, 0, 10, 28)
-private val arcRotation = listOf(-14f, -10f, -5f, 0f, 5f, 10f, 14f)
+private val arcYOffset = listOf(44, 18, 2, 0, 2, 18, 44)
+private val arcRotation = listOf(-20f, -14f, -7f, 0f, 7f, 14f, 20f)
 
 @Composable
 fun HomeDateCarousel(
@@ -51,8 +50,7 @@ fun HomeDateCarousel(
 ) {
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .clipToBounds(),
+            .fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
         Row(
