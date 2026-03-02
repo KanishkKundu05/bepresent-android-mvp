@@ -93,6 +93,8 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
     var learnMoreTopic by remember { mutableStateOf<LearnMoreTopic?>(null) }
     var showAccessibilityWhyDialog by remember { mutableStateOf(false) }
 
+    var waitingForStep by remember { mutableIntStateOf(-1) }
+
     var finished by remember { mutableStateOf(false) }
     var lastGrantedCount by remember {
         mutableIntStateOf(grantedCount(overlayGranted, usageGranted, accessibilityGranted))
@@ -109,6 +111,7 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
     // Re-check permissions on every resume
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            waitingForStep = -1 // stop background polling when app is in foreground
             val newOverlay = permissionManager.hasOverlayPermission()
             val newUsage = permissionManager.hasUsageStatsPermission()
             val newAccessibility = permissionManager.hasAccessibilityPermission()
@@ -133,6 +136,22 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
             delay(1400)
             progressPopupCount = 0
         }
+    }
+
+    // Poll permission status while user is in Settings; auto-return when granted
+    LaunchedEffect(waitingForStep) {
+        if (waitingForStep < 0) return@LaunchedEffect
+        val check: () -> Boolean = when (waitingForStep) {
+            STEP_OVERLAY -> permissionManager::hasOverlayPermission
+            STEP_USAGE_ACCESS -> permissionManager::hasUsageStatsPermission
+            STEP_ACCESSIBILITY -> permissionManager::hasAccessibilityPermission
+            else -> return@LaunchedEffect
+        }
+        while (!check()) {
+            delay(500)
+        }
+        waitingForStep = -1
+        bringAppToForeground(context)
     }
 
     // Complete when all granted and popup dismissed
@@ -164,6 +183,7 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
                         if (overlayGranted) {
                             currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
                         } else {
+                            waitingForStep = STEP_OVERLAY
                             openSettings(
                                 context,
                                 permissionManager.getOverlayPermissionIntent(),
@@ -183,6 +203,7 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
                         if (usageGranted) {
                             currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
                         } else {
+                            waitingForStep = STEP_USAGE_ACCESS
                             openSettings(
                                 context,
                                 permissionManager.getUsageAccessIntent(),
@@ -228,6 +249,7 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
                 Button(
                     onClick = {
                         showAccessibilityWhyDialog = false
+                        waitingForStep = STEP_ACCESSIBILITY
                         openSettings(
                             context,
                             permissionManager.getAccessibilitySettingsIntent(),
@@ -544,4 +566,10 @@ private fun openSettings(context: Context, intent: Intent, fallback: Intent) {
     } catch (_: ActivityNotFoundException) {
         context.startActivity(fallback)
     }
+}
+
+private fun bringAppToForeground(context: Context) {
+    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
+    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+    context.startActivity(intent)
 }

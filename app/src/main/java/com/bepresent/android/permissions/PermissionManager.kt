@@ -18,6 +18,10 @@ import javax.inject.Singleton
 class PermissionManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    companion object {
+        private const val SETTINGS_HIGHLIGHT_KEY = ":settings:fragment_args_key"
+    }
+
     fun hasUsageStatsPermission(): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.unsafeCheckOpNoThrow(
@@ -38,7 +42,9 @@ class PermissionManager @Inject constructor(
     }
 
     fun getUsageAccessIntent(): Intent {
-        return Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+        return Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+            putExtra(SETTINGS_HIGHLIGHT_KEY, context.packageName)
+        }
     }
 
     fun getBatteryOptimizationIntent(): Intent {
@@ -80,7 +86,10 @@ class PermissionManager @Inject constructor(
     }
 
     fun getAccessibilitySettingsIntent(): Intent {
-        return Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        return Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            val componentName = ComponentName(context, AccessibilityMonitorService::class.java)
+            putExtra(SETTINGS_HIGHLIGHT_KEY, componentName.flattenToString())
+        }
     }
 
     fun getAppSettingsIntent(): Intent {
