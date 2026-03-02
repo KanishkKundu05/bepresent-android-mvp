@@ -120,5 +120,6 @@ class BlockedAppActivity : ComponentActivity() {
         const val SHIELD_SESSION = "session"
         const val SHIELD_INTENTION = "intention"
         const val SHIELD_GOAL_REACHED = "goalReached"
+        const val SHIELD_SCHEDULE = "schedule"
     }
 }

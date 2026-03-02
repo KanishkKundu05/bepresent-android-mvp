@@ -63,6 +63,9 @@ fun ShieldScreen(
             sessionManager = sessionManager,
             onNavigateHome = onNavigateHome
         )
+        BlockedAppActivity.SHIELD_SCHEDULE -> ScheduleShield(
+            onNavigateHome = onNavigateHome
+        )
         BlockedAppActivity.SHIELD_INTENTION -> IntentionShield(
             blockedPackage = blockedPackage,
             intentionManager = intentionManager,
@@ -363,6 +366,51 @@ private fun IntentionShield(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScheduleShield(
+    onNavigateHome: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(text = "\uD83E\uDD77", fontSize = 64.sp) // ninja emoji
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Scheduled Block Active",
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "This app is blocked during your scheduled session",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = {
+                    RuntimeLog.d(TAG, "ScheduleShield: Be Present -> navigate home")
+                    onNavigateHome()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text("Be Present", style = MaterialTheme.typography.titleMedium)
             }
         }
     }

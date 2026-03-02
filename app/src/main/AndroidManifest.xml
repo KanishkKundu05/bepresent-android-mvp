@@ -110,6 +110,11 @@
             android:name=".service.SessionAlarmReceiver"
             android:exported="false" />
 
+        <!-- Scheduled session alarm receiver (start/stop daily blocks) -->
+        <receiver
+            android:name=".service.ScheduleAlarmReceiver"
+            android:exported="false" />
+
         <!-- Auth0 redirect activity for login callback -->
         <activity
             android:name="com.auth0.android.provider.RedirectActivity"

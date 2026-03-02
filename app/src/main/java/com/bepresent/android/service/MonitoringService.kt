@@ -13,8 +13,10 @@ import com.bepresent.android.debug.RuntimeLog
 import com.bepresent.android.data.db.AppIntentionDao
 import com.bepresent.android.data.db.PresentSession
 import com.bepresent.android.data.db.PresentSessionDao
+import com.bepresent.android.data.db.ScheduledSessionDao
 import com.bepresent.android.data.usage.UsageStatsRepository
 import com.bepresent.android.features.blocking.BlockedAppActivity
+import com.bepresent.android.features.schedules.ScheduledSessionManager
 import com.bepresent.android.features.sessions.SessionManager
 import com.bepresent.android.permissions.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,7 +36,9 @@ class MonitoringService : Service() {
     @Inject lateinit var usageStatsRepository: UsageStatsRepository
     @Inject lateinit var intentionDao: AppIntentionDao
     @Inject lateinit var sessionDao: PresentSessionDao
+    @Inject lateinit var scheduledSessionDao: ScheduledSessionDao
     @Inject lateinit var sessionManager: SessionManager
+    @Inject lateinit var scheduledSessionManager: ScheduledSessionManager
     @Inject lateinit var permissionManager: PermissionManager
 
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -119,15 +123,28 @@ class MonitoringService : Service() {
             .map { it.packageName }
             .toSet()
 
-        val combined = sessionBlocked + intentionBlocked
+        val scheduleBlocked = getScheduleBlockedPackages()
+
+        val combined = sessionBlocked + intentionBlocked + scheduleBlocked
         if (combined.isNotEmpty()) {
-            RuntimeLog.d(TAG, "getBlocked: session=$sessionBlocked intention=$intentionBlocked")
+            RuntimeLog.d(TAG, "getBlocked: session=$sessionBlocked intention=$intentionBlocked schedule=$scheduleBlocked")
         }
         return combined
     }
 
+    private suspend fun getScheduleBlockedPackages(): Set<String> {
+        val enabledSessions = scheduledSessionDao.getEnabled()
+        val blocked = mutableSetOf<String>()
+        for (session in enabledSessions) {
+            if (scheduledSessionManager.isCurrentlyActive(session)) {
+                blocked.addAll(scheduledSessionManager.getBlockedPackagesFromJson(session.blockedPackages))
+            }
+        }
+        return blocked
+    }
+
     private suspend fun determineShieldType(packageName: String): String {
-        // Session takes priority over intention
+        // Session takes priority over schedule, which takes priority over intention
         val activeSession = sessionDao.getActiveSession()
         if (activeSession != null) {
             val sessionPackages = sessionManager.getBlockedPackagesFromJson(activeSession.blockedPackages)
@@ -139,6 +156,13 @@ class MonitoringService : Service() {
                 }
             }
         }
+
+        // Check scheduled sessions
+        val scheduleBlocked = getScheduleBlockedPackages()
+        if (packageName in scheduleBlocked) {
+            return BlockedAppActivity.SHIELD_SCHEDULE
+        }
+
         return BlockedAppActivity.SHIELD_INTENTION
     }
 
@@ -279,15 +303,29 @@ class MonitoringService : Service() {
             context.stopService(Intent(context, MonitoringService::class.java))
         }
 
-        fun checkAndStop(context: Context, sessionDao: PresentSessionDao, intentionDao: AppIntentionDao) {
+        fun checkAndStop(
+            context: Context,
+            sessionDao: PresentSessionDao,
+            intentionDao: AppIntentionDao,
+            scheduledSessionDao: ScheduledSessionDao? = null
+        ) {
             CoroutineScope(Dispatchers.IO).launch {
                 val hasActiveSession = sessionDao.getActiveSession() != null
                 val intentionCount = intentionDao.getCount()
+                val hasActiveSchedule = scheduledSessionDao?.let { dao ->
+                    val cal = java.util.Calendar.getInstance()
+                    val nowMinutes = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+                    dao.getEnabled().any { session ->
+                        val start = session.startHour * 60 + session.startMinute
+                        val end = session.endHour * 60 + session.endMinute
+                        nowMinutes in start until end
+                    }
+                } ?: false
                 RuntimeLog.i(
                     TAG,
-                    "checkAndStop: hasActiveSession=$hasActiveSession intentionCount=$intentionCount"
+                    "checkAndStop: hasActiveSession=$hasActiveSession intentionCount=$intentionCount hasActiveSchedule=$hasActiveSchedule"
                 )
-                if (!hasActiveSession && intentionCount == 0) {
+                if (!hasActiveSession && intentionCount == 0 && !hasActiveSchedule) {
                     stop(context)
                 }
             }

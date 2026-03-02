@@ -46,6 +46,8 @@ import com.bepresent.android.ui.leaderboard.LeaderboardScreen
 import com.bepresent.android.ui.onboarding.v2.OnboardingV2Screen
 import com.bepresent.android.ui.partner.PartnerScreen
 import com.bepresent.android.ui.profile.ProfileScreen
+import com.bepresent.android.ui.schedules.SchedulesScreen
+import com.bepresent.android.ui.schedules.SchedulesViewModel
 import com.bepresent.android.ui.screentime.ScreenTimeScreen
 import com.bepresent.android.ui.screentime.ScreenTimeViewModel
 import com.bepresent.android.ui.social.SocialScreen
@@ -153,9 +155,10 @@ private fun MainAppContent() {
                 )
             }
 
-            // Schedules tab (placeholder)
+            // Schedules tab
             composable(BottomTab.Schedules.route) {
-                PlaceholderTab(name = "Schedules")
+                val viewModel: SchedulesViewModel = hiltViewModel()
+                SchedulesScreen(viewModel = viewModel)
             }
 
             // Leaderboard tab
