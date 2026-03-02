@@ -1,6 +1,8 @@
 package com.bepresent.android.ui.onboarding.v2
 
+import android.view.Choreographer
 import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.MonotonicFrameClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bepresent.android.data.datastore.PreferencesManager
@@ -10,12 +12,15 @@ import com.bepresent.android.ui.onboarding.v2.util.calculateYearsBack
 import com.bepresent.android.ui.onboarding.v2.util.calculateYearsOnPhone
 import com.bepresent.android.ui.onboarding.v2.util.screenTimeAnswerToHours
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
+import kotlin.coroutines.resume
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
@@ -38,6 +43,20 @@ class OnboardingViewModel @Inject constructor(
 
     private val _username = MutableStateFlow("")
     val username: StateFlow<String> = _username.asStateFlow()
+
+    /** Frame clock backed by Android Choreographer so Animatable works in viewModelScope. */
+    private val frameClock = object : MonotonicFrameClock {
+        override suspend fun <R> withFrameNanos(onFrame: (Long) -> R): R =
+            suspendCancellableCoroutine { cont ->
+                val callback = Choreographer.FrameCallback { frameTimeNanos ->
+                    cont.resume(onFrame(frameTimeNanos))
+                }
+                Choreographer.getInstance().postFrameCallback(callback)
+                cont.invokeOnCancellation {
+                    Choreographer.getInstance().removeFrameCallback(callback)
+                }
+            }
+    }
 
     val totalScreens: Int get() = screens.size
 
@@ -70,7 +89,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     private fun animateTransition(forward: Boolean, targetIndex: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(frameClock) {
             _isAnimating.value = true
             val currentScreen = screens[_currentIndex.value]
             val targetScreen = screens[targetIndex]

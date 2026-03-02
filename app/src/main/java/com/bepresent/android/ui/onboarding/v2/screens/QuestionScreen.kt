@@ -32,7 +32,7 @@ fun QuestionScreen(
     selectedAnswer: String?,
     onSelect: (String) -> Unit
 ) {
-    var isProcessing by remember { mutableStateOf(false) }
+    var isProcessing by remember(title) { mutableStateOf(false) }
 
     Column(
         modifier = Modifier

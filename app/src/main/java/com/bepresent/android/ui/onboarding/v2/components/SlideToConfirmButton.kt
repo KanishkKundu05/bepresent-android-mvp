@@ -97,6 +97,8 @@ fun SlideToConfirmButton(
                 .background(OnboardingTokens.NeutralWhite)
                 .pointerInput(isCompleted) {
                     if (isCompleted) return@pointerInput
+                    val thumbPx = thumbSizeDp.toPx()
+                    val padPx = 4.dp.toPx()
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             if (dragProgress >= COMPLETION_THRESHOLD) {
@@ -111,8 +113,10 @@ fun SlideToConfirmButton(
                             dragProgress = 0f
                         },
                         onHorizontalDrag = { _, dragAmount ->
-                            if (maxDragPx > 0) {
-                                val delta = dragAmount / maxDragPx
+                            val maxDrag = (trackWidthPx - thumbPx - padPx * 2)
+                                .coerceAtLeast(0f)
+                            if (maxDrag > 0) {
+                                val delta = dragAmount / maxDrag
                                 dragProgress = (dragProgress + delta).coerceIn(0f, 1f)
                             }
                         }
