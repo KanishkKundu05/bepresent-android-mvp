@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -56,8 +56,8 @@ fun HomeDateCarousel(
         contentAlignment = Alignment.Center
     ) {
         Row(
-            modifier = Modifier.wrapContentWidth(unbounded = true),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.requiredWidth(520.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             days.forEachIndexed { index, day ->
