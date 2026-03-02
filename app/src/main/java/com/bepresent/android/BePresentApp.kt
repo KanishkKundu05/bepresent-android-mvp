@@ -7,6 +7,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.bepresent.android.data.convex.ConvexManager
 import com.bepresent.android.data.convex.SyncWorker
+import com.stripe.android.PaymentConfiguration
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,9 @@ class BePresentApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.STRIPE_PUBLISHABLE_KEY.isNotBlank()) {
+            PaymentConfiguration.init(this, BuildConfig.STRIPE_PUBLISHABLE_KEY)
+        }
         createNotificationChannels()
         com.bepresent.android.features.intentions.DailyResetWorker.schedule(this)
         SyncWorker.schedulePeriodic(this)

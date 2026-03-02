@@ -24,6 +24,7 @@ sealed class OnboardingScreenType {
     data object SuggestedIntention : OnboardingScreenType()
     data object NotificationPermission : OnboardingScreenType()
     data object SevenDayChallenge : OnboardingScreenType()
+    data object Paywall : OnboardingScreenType()
     data class PostPaywallMessage(val message: String) : OnboardingScreenType()
     data object ChooseUsername : OnboardingScreenType()
     data object SelectApps : OnboardingScreenType()
@@ -46,7 +47,8 @@ val OnboardingScreenType.showProgressBar: Boolean
         is OnboardingScreenType.Welcome,
         is OnboardingScreenType.UserWhy,
         is OnboardingScreenType.UserHow,
-        is OnboardingScreenType.UserWhat -> false
+        is OnboardingScreenType.UserWhat,
+        is OnboardingScreenType.Paywall -> false
         else -> true
     }
 
@@ -72,6 +74,7 @@ val OnboardingScreenType.buttonConfig: ButtonConfig
         is OnboardingScreenType.SuggestedIntention -> ButtonConfig.Hidden
         is OnboardingScreenType.NotificationPermission -> ButtonConfig.Hidden
         is OnboardingScreenType.SevenDayChallenge -> ButtonConfig.Hidden
+        is OnboardingScreenType.Paywall -> ButtonConfig.Hidden
         is OnboardingScreenType.PostPaywallMessage -> ButtonConfig.Full
         is OnboardingScreenType.ChooseUsername -> ButtonConfig.Hidden
         is OnboardingScreenType.SelectApps -> ButtonConfig.Hidden
@@ -112,6 +115,7 @@ val OnboardingScreenType.gradientType: GradientType
         is OnboardingScreenType.SuggestedIntention -> GradientType.White
         is OnboardingScreenType.NotificationPermission -> GradientType.White
         is OnboardingScreenType.SevenDayChallenge -> GradientType.White
+        is OnboardingScreenType.Paywall -> GradientType.White
         is OnboardingScreenType.PostPaywallMessage -> GradientType.Blue
         is OnboardingScreenType.ChooseUsername -> GradientType.White
         is OnboardingScreenType.SelectApps -> GradientType.White
@@ -176,6 +180,7 @@ fun buildOnboardingScreens(): List<OnboardingScreenType> = listOf(
     OnboardingScreenType.SuggestedIntention,
     OnboardingScreenType.NotificationPermission,
     OnboardingScreenType.SevenDayChallenge,
+    OnboardingScreenType.Paywall,
     OnboardingScreenType.PostPaywallMessage(
         message = "You're all set! Let's start your journey to less screen time."
     ),

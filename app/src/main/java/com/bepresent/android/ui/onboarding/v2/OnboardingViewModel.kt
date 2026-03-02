@@ -6,6 +6,7 @@ import androidx.compose.runtime.MonotonicFrameClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bepresent.android.data.datastore.PreferencesManager
+import com.bepresent.android.data.subscription.SubscriptionManager
 import com.bepresent.android.ui.onboarding.v2.animation.OnboardingAnimSpecs
 import com.bepresent.android.ui.onboarding.v2.animation.ScreenAnimation
 import com.bepresent.android.ui.onboarding.v2.util.calculateYearsBack
@@ -24,7 +25,8 @@ import kotlin.coroutines.resume
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val subscriptionManager: SubscriptionManager
 ) : ViewModel() {
 
     val screens: List<OnboardingScreenType> = buildOnboardingScreens()
@@ -166,7 +168,16 @@ class OnboardingViewModel @Inject constructor(
     private suspend fun loadProgress() {
         val savedIndex = preferencesManager.getOnboardingV2ProgressOnce()
         if (savedIndex > 0) {
-            _currentIndex.value = savedIndex.coerceIn(0, screens.size - 1)
+            var index = savedIndex.coerceIn(0, screens.size - 1)
+            // Paywall guard: if saved past paywall but subscription inactive, clamp to paywall
+            val paywallIndex = screens.indexOfFirst { it is OnboardingScreenType.Paywall }
+            if (paywallIndex >= 0 && index > paywallIndex) {
+                val active = subscriptionManager.isSubscriptionActive()
+                if (!active) {
+                    index = paywallIndex
+                }
+            }
+            _currentIndex.value = index
         }
         val savedAnswers = preferencesManager.getOnboardingV2AnswersOnce()
         if (savedAnswers.isNotEmpty()) {

@@ -48,6 +48,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BePresent">
 
+        <!-- Google Pay support for Stripe -->
+        <meta-data
+            android:name="com.google.android.gms.wallet.api.enabled"
+            android:value="true" />
+
         <!-- Main dashboard activity -->
         <activity
             android:name=".MainActivity"

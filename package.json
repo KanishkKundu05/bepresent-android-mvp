@@ -6,6 +6,7 @@
     "deploy": "npx convex deploy"
   },
   "dependencies": {
-    "convex": "^1.17.0"
+    "convex": "^1.17.0",
+    "stripe": "^14.0.0"
   }
 }

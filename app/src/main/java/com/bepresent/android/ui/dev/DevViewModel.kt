@@ -79,6 +79,7 @@ class DevViewModel @Inject constructor(
             is OnboardingScreenType.PermissionsSetup -> "Permissions"
             is OnboardingScreenType.NotificationPermission -> "Notifications"
             is OnboardingScreenType.SevenDayChallenge -> "7DayChallenge"
+            is OnboardingScreenType.Paywall -> "Paywall"
             is OnboardingScreenType.PostPaywallMessage -> "PostPaywall"
             is OnboardingScreenType.ChooseUsername -> "Username"
             is OnboardingScreenType.SuggestedIntention -> "SuggestedIntention"
