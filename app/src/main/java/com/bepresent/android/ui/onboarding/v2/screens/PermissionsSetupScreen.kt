@@ -1,5 +1,6 @@
 package com.bepresent.android.ui.onboarding.v2.screens
 
+import android.app.ActivityManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -130,10 +131,10 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
         }
     }
 
-    // Auto-dismiss progress popup after 1.4s (unless all done)
+    // Auto-dismiss progress popup after animation plays
     LaunchedEffect(progressPopupCount) {
-        if (progressPopupCount in 1 until TOTAL_PERMISSIONS) {
-            delay(1400)
+        if (progressPopupCount > 0) {
+            delay(if (progressPopupCount == TOTAL_PERMISSIONS) 1800 else 1400)
             progressPopupCount = 0
         }
     }
@@ -162,74 +163,84 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
     }
 
     // ── Main UI ──
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        AnimatedContent(
-            targetState = currentStep.coerceIn(STEP_OVERLAY, STEP_ACCESSIBILITY),
-            label = "permission_onboarding"
-        ) { step ->
-            when (step) {
-                STEP_OVERLAY -> PermissionPage(
-                    title = "Enable BePresent to block distracting apps",
-                    subtitle = "Don't worry, you can take a break any time.",
-                    firstInstruction = "Find BePresent in the list of apps",
-                    secondInstruction = "Toggle \"Allow Display over other apps\"",
-                    onContinue = {
-                        if (overlayGranted) {
-                            currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
-                        } else {
-                            waitingForStep = STEP_OVERLAY
-                            openSettings(
-                                context,
-                                permissionManager.getOverlayPermissionIntent(),
-                                permissionManager.getAppSettingsIntent()
-                            )
-                        }
-                    },
-                    onLearnMore = { learnMoreTopic = LearnMoreTopic.OVERLAY }
-                )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            AnimatedContent(
+                targetState = currentStep.coerceIn(STEP_OVERLAY, STEP_ACCESSIBILITY),
+                label = "permission_onboarding"
+            ) { step ->
+                when (step) {
+                    STEP_OVERLAY -> PermissionPage(
+                        title = "Enable BePresent to block distracting apps",
+                        subtitle = "Don't worry, you can take a break any time.",
+                        firstInstruction = "Find BePresent in the list of apps",
+                        secondInstruction = "Toggle \"Allow Display over other apps\"",
+                        onContinue = {
+                            if (overlayGranted) {
+                                currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
+                            } else {
+                                waitingForStep = STEP_OVERLAY
+                                openSettings(
+                                    context,
+                                    permissionManager.getOverlayPermissionIntent(),
+                                    permissionManager.getAppSettingsIntent()
+                                )
+                            }
+                        },
+                        onLearnMore = { learnMoreTopic = LearnMoreTopic.OVERLAY }
+                    )
 
-                STEP_USAGE_ACCESS -> PermissionPage(
-                    title = "Allow BePresent to Monitor Screentime",
-                    subtitle = "All your information is secure and will stay 100% on your phone.",
-                    firstInstruction = "Find BePresent in the list of apps",
-                    secondInstruction = "Toggle \"Permit Usage Access\"",
-                    onContinue = {
-                        if (usageGranted) {
-                            currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
-                        } else {
-                            waitingForStep = STEP_USAGE_ACCESS
-                            openSettings(
-                                context,
-                                permissionManager.getUsageAccessIntent(),
-                                permissionManager.getAppSettingsIntent()
-                            )
-                        }
-                    },
-                    onLearnMore = { learnMoreTopic = LearnMoreTopic.USAGE }
-                )
+                    STEP_USAGE_ACCESS -> PermissionPage(
+                        title = "Allow BePresent to Monitor Screentime",
+                        subtitle = "All your information is secure and will stay 100% on your phone.",
+                        firstInstruction = "Find BePresent in the list of apps",
+                        secondInstruction = "Toggle \"Permit Usage Access\"",
+                        onContinue = {
+                            if (usageGranted) {
+                                currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
+                            } else {
+                                waitingForStep = STEP_USAGE_ACCESS
+                                openSettings(
+                                    context,
+                                    permissionManager.getUsageAccessIntent(),
+                                    permissionManager.getAppSettingsIntent()
+                                )
+                            }
+                        },
+                        onLearnMore = { learnMoreTopic = LearnMoreTopic.USAGE }
+                    )
 
-                STEP_ACCESSIBILITY -> PermissionPage(
-                    title = "Enable Accessibility permission",
-                    subtitle = "This lets BePresent detect the app currently active, so it can block distractions. We never track or read your screen content.",
-                    firstInstruction = "Find BePresent in the list of services",
-                    secondInstruction = "Toggle BePresent accessibility on",
-                    onContinue = {
-                        if (accessibilityGranted) {
-                            currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
-                        } else {
-                            showAccessibilityWhyDialog = true
-                        }
-                    },
-                    onLearnMore = { learnMoreTopic = LearnMoreTopic.ACCESSIBILITY }
-                )
-                else -> Unit
+                    STEP_ACCESSIBILITY -> PermissionPage(
+                        title = "Enable Accessibility permission",
+                        subtitle = "This lets BePresent detect the app currently active, so it can block distractions. We never track or read your screen content.",
+                        firstInstruction = "Find BePresent in the list of services",
+                        secondInstruction = "Toggle BePresent accessibility on",
+                        onContinue = {
+                            if (accessibilityGranted) {
+                                currentStep = nextMissingStep(overlayGranted, usageGranted, accessibilityGranted)
+                            } else {
+                                showAccessibilityWhyDialog = true
+                            }
+                        },
+                        onLearnMore = { learnMoreTopic = LearnMoreTopic.ACCESSIBILITY }
+                    )
+                    else -> Unit
+                }
             }
+        }
+
+        // ── Progress popup (positioned lower on screen) ──
+        if (progressPopupCount > 0) {
+            PermissionProgressPopup(
+                grantedCount = progressPopupCount,
+                totalCount = TOTAL_PERMISSIONS
+            )
         }
     }
 
@@ -290,22 +301,6 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
         )
     }
 
-    // ── Progress popup ──
-    if (progressPopupCount > 0) {
-        PermissionProgressPopup(
-            grantedCount = progressPopupCount,
-            totalCount = TOTAL_PERMISSIONS,
-            onDismiss = {
-                if (progressPopupCount < TOTAL_PERMISSIONS) {
-                    progressPopupCount = 0
-                }
-            },
-            onComplete = {
-                progressPopupCount = 0
-                doComplete()
-            }
-        )
-    }
 }
 
 // ── PermissionPage with TwoStepTimeline + Learn More ──
@@ -426,14 +421,12 @@ private fun TimelineNumber(number: Int) {
     }
 }
 
-// ── PermissionProgressPopup ──
+// ── PermissionProgressPopup (floating card, no buttons, auto-dismiss) ──
 
 @Composable
 private fun PermissionProgressPopup(
     grantedCount: Int,
-    totalCount: Int,
-    onDismiss: () -> Unit,
-    onComplete: () -> Unit
+    totalCount: Int
 ) {
     var targetProgress by remember(grantedCount) { mutableFloatStateOf(0f) }
 
@@ -447,92 +440,75 @@ private fun PermissionProgressPopup(
         label = "permission_progress"
     )
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Permissions progress",
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        text = {
-            Card(
-                shape = RoundedCornerShape(18.dp)
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Card(
+            modifier = Modifier.padding(start = 40.dp, end = 40.dp, bottom = 120.dp),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
+                Box(contentAlignment = Alignment.Center) {
+                    Canvas(modifier = Modifier.size(120.dp)) {
+                        val strokeWidth = 10.dp.toPx()
+                        val arcDiameter = size.minDimension - strokeWidth
+                        val topLeft = Offset(
+                            (size.width - arcDiameter) / 2f,
+                            (size.height - arcDiameter) / 2f
+                        )
+
+                        drawArc(
+                            color = OnboardingTokens.Neutral200,
+                            startAngle = 180f,
+                            sweepAngle = 180f,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = Size(arcDiameter, arcDiameter),
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                        drawArc(
+                            color = OnboardingTokens.BrandPrimary,
+                            startAngle = 180f,
+                            sweepAngle = 180f * animatedProgress,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = Size(arcDiameter, arcDiameter),
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                    }
+
+                    Text(
+                        text = "$grantedCount/$totalCount",
+                        style = OnboardingTypography.h2,
+                        fontWeight = FontWeight.Bold,
+                        color = OnboardingTokens.NeutralBlack
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(18.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(OnboardingTokens.Neutral200)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Canvas(modifier = Modifier.size(170.dp)) {
-                            val strokeWidth = 12.dp.toPx()
-                            val arcDiameter = size.minDimension - strokeWidth
-                            val topLeft = Offset(
-                                (size.width - arcDiameter) / 2f,
-                                (size.height - arcDiameter) / 2f
-                            )
-
-                            drawArc(
-                                color = OnboardingTokens.Neutral200,
-                                startAngle = 180f,
-                                sweepAngle = 180f,
-                                useCenter = false,
-                                topLeft = topLeft,
-                                size = Size(arcDiameter, arcDiameter),
-                                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                            )
-                            drawArc(
-                                color = OnboardingTokens.BrandPrimary,
-                                startAngle = 180f,
-                                sweepAngle = 180f * animatedProgress,
-                                useCenter = false,
-                                topLeft = topLeft,
-                                size = Size(arcDiameter, arcDiameter),
-                                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                            )
-                        }
-
-                        Text(
-                            text = "$grantedCount/$totalCount",
-                            style = OnboardingTypography.h2,
-                            fontWeight = FontWeight.Bold,
-                            color = OnboardingTokens.NeutralBlack
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(100.dp))
-                            .background(OnboardingTokens.Neutral200)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
-                                .fillMaxHeight()
-                                .background(OnboardingTokens.BrandPrimary)
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            if (grantedCount == totalCount) {
-                Button(onClick = onComplete) {
-                    Text("Continue")
-                }
-            } else {
-                TextButton(onClick = onDismiss) {
-                    Text("OK")
+                            .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
+                            .fillMaxHeight()
+                            .background(OnboardingTokens.BrandPrimary)
+                    )
                 }
             }
         }
-    )
+    }
 }
 
 // ── Helpers ──
@@ -569,7 +545,23 @@ private fun openSettings(context: Context, intent: Intent, fallback: Intent) {
 }
 
 private fun bringAppToForeground(context: Context) {
-    val intent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
-    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-    context.startActivity(intent)
+    // moveToFront works more reliably from background than startActivity
+    try {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        val appTasks = am?.appTasks
+        if (!appTasks.isNullOrEmpty()) {
+            appTasks[0].moveToFront()
+            return
+        }
+    } catch (_: Exception) { }
+    // Fallback to launch intent
+    try {
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
+        intent.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+        )
+        context.startActivity(intent)
+    } catch (_: Exception) { }
 }
