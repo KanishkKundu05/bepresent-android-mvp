@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.sp
 import com.bepresent.android.debug.RuntimeLog
 import com.bepresent.android.data.datastore.PreferencesManager
 import com.bepresent.android.data.db.AppIntention
-import com.bepresent.android.data.db.AppIntentionDao
 import com.bepresent.android.data.db.PresentSession
 import com.bepresent.android.data.db.PresentSessionDao
 import com.bepresent.android.features.intentions.IntentionManager
@@ -52,7 +51,6 @@ fun ShieldScreen(
     shieldType: String,
     intentionManager: IntentionManager,
     sessionManager: SessionManager,
-    intentionDao: AppIntentionDao,
     sessionDao: PresentSessionDao,
     preferencesManager: PreferencesManager,
     onNavigateHome: () -> Unit,

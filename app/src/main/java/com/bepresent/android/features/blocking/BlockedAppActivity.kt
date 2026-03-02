@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.bepresent.android.debug.RuntimeLog
-import com.bepresent.android.data.db.AppIntentionDao
 import com.bepresent.android.data.db.PresentSessionDao
 import com.bepresent.android.data.datastore.PreferencesManager
 import com.bepresent.android.features.intentions.IntentionManager
@@ -24,7 +23,6 @@ class BlockedAppActivity : ComponentActivity() {
 
     @Inject lateinit var intentionManager: IntentionManager
     @Inject lateinit var sessionManager: SessionManager
-    @Inject lateinit var intentionDao: AppIntentionDao
     @Inject lateinit var sessionDao: PresentSessionDao
     @Inject lateinit var preferencesManager: PreferencesManager
 
@@ -58,7 +56,6 @@ class BlockedAppActivity : ComponentActivity() {
                         shieldType = shieldType,
                         intentionManager = intentionManager,
                         sessionManager = sessionManager,
-                        intentionDao = intentionDao,
                         sessionDao = sessionDao,
                         preferencesManager = preferencesManager,
                         onNavigateHome = { navigateHome() },
