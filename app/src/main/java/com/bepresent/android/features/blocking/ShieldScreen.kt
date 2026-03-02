@@ -1,12 +1,17 @@
 package com.bepresent.android.features.blocking
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -17,12 +22,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +43,7 @@ import com.bepresent.android.data.db.PresentSessionDao
 import com.bepresent.android.features.intentions.IntentionManager
 import com.bepresent.android.features.sessions.SessionManager
 import com.bepresent.android.features.sessions.SessionStateMachine
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -225,6 +234,8 @@ private fun GoalReachedShield(
     }
 }
 
+private const val COUNTDOWN_SECONDS = 5
+
 @Composable
 private fun IntentionShield(
     blockedPackage: String,
@@ -236,6 +247,7 @@ private fun IntentionShield(
     val scope = rememberCoroutineScope()
     var intention by remember { mutableStateOf<AppIntention?>(null) }
     val freezeAvailable by preferencesManager.streakFreezeAvailable.collectAsState(initial = false)
+    var countdownSeconds by remember { mutableIntStateOf(COUNTDOWN_SECONDS) }
 
     LaunchedEffect(blockedPackage) {
         intention = intentionManager.getByPackage(blockedPackage)
@@ -243,6 +255,14 @@ private fun IntentionShield(
             TAG,
             "IntentionShield: lookup package=$blockedPackage found=${intention != null}"
         )
+    }
+
+    // Countdown timer
+    LaunchedEffect(Unit) {
+        while (countdownSeconds > 0) {
+            delay(1000L)
+            countdownSeconds--
+        }
     }
 
     val currentIntention = intention
@@ -256,6 +276,9 @@ private fun IntentionShield(
     }
 
     val isOverLimit = currentIntention.totalOpensToday >= currentIntention.allowedOpensPerDay
+    val opensLeft = (currentIntention.allowedOpensPerDay - currentIntention.totalOpensToday)
+        .coerceAtLeast(0)
+    val isCountingDown = countdownSeconds > 0
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -268,54 +291,59 @@ private fun IntentionShield(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "\uD83D\uDCF1", fontSize = 64.sp)
-            Spacer(modifier = Modifier.height(16.dp))
+            // Heading
             Text(
-                text = currentIntention.appName,
-                style = MaterialTheme.typography.titleLarge,
+                text = "Is this Important?",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
                 textAlign = TextAlign.Center
             )
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (isOverLimit) {
-                Text(
-                    text = "You've used all ${currentIntention.allowedOpensPerDay} opens today",
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.error
-                )
-                if (currentIntention.streak > 0 && !freezeAvailable) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Opening will break your \uD83D\uDD25 ${currentIntention.streak} day streak",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            } else {
-                Text(
-                    text = "Open ${currentIntention.appName}?",
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
+            // Opens remaining counter
             Text(
-                text = "${currentIntention.totalOpensToday}/${currentIntention.allowedOpensPerDay} Opens Today",
-                style = MaterialTheme.typography.bodyLarge,
+                text = "$opensLeft/${currentIntention.allowedOpensPerDay}",
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "opens left today",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            if (currentIntention.streak > 0) {
-                Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Indicator circles
+            OpensIndicator(
+                total = currentIntention.allowedOpensPerDay,
+                remaining = opensLeft
+            )
+
+            // Over-limit warning
+            if (isOverLimit) {
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "\uD83D\uDD25 ${currentIntention.streak} Day Streak",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
+                    text = "You've used all your opens today",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.error
                 )
+                if (currentIntention.streak > 0 && !freezeAvailable) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Opening will break your \uD83D\uDD25 ${currentIntention.streak} day streak",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
 
             if (freezeAvailable) {
@@ -328,22 +356,10 @@ private fun IntentionShield(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
-            // Primary: Nevermind (go home)
+            // Open button with countdown
             Button(
-                onClick = onNavigateHome,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Text("Nevermind", style = MaterialTheme.typography.titleMedium)
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Secondary: Open app
-            TextButton(
                 onClick = {
                     scope.launch {
                         RuntimeLog.i(
@@ -353,17 +369,67 @@ private fun IntentionShield(
                         intentionManager.openApp(currentIntention.id)
                         onFinish()
                     }
-                }
+                },
+                enabled = !isCountingDown,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
+                )
             ) {
                 Text(
-                    text = if (isOverLimit) "Open Anyway" else "Open ${currentIntention.appName}",
-                    style = MaterialTheme.typography.titleSmall
+                    text = if (isCountingDown) {
+                        "Open in ${countdownSeconds}s"
+                    } else if (isOverLimit) {
+                        "Open Anyway"
+                    } else {
+                        "Open for ${currentIntention.timePerOpenMinutes} min"
+                    },
+                    style = MaterialTheme.typography.titleMedium
                 )
-                if (!isOverLimit) {
-                    Text(
-                        text = "  (for ${currentIntention.timePerOpenMinutes} minutes)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Dismiss text
+            TextButton(onClick = onNavigateHome) {
+                Text(
+                    text = "Dismiss",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OpensIndicator(
+    total: Int,
+    remaining: Int
+) {
+    val filledColor = MaterialTheme.colorScheme.primary
+    val hollowColor = MaterialTheme.colorScheme.outlineVariant
+
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        for (i in 0 until total) {
+            if (i > 0) Spacer(modifier = Modifier.width(8.dp))
+            val isFilled = i < remaining
+            Canvas(modifier = Modifier.size(12.dp)) {
+                if (isFilled) {
+                    drawCircle(color = filledColor)
+                } else {
+                    drawCircle(
+                        color = hollowColor,
+                        style = Stroke(width = 2.dp.toPx())
                     )
                 }
             }
