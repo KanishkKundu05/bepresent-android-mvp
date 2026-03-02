@@ -1,8 +1,11 @@
 package com.bepresent.android.features.schedules
 
+import android.content.Context
 import com.bepresent.android.data.db.ScheduledSession
 import com.bepresent.android.data.db.ScheduledSessionDao
 import com.bepresent.android.debug.RuntimeLog
+import com.bepresent.android.service.MonitoringService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import org.json.JSONArray
 import java.util.Calendar
@@ -12,6 +15,7 @@ import javax.inject.Singleton
 
 @Singleton
 class ScheduledSessionManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val dao: ScheduledSessionDao,
     private val alarmScheduler: ScheduleAlarmScheduler
 ) {
@@ -25,6 +29,11 @@ class ScheduledSessionManager @Inject constructor(
         dao.upsert(updated)
         if (enabled) {
             alarmScheduler.scheduleAlarms(updated)
+            // If we're already inside the active window, start blocking immediately
+            if (isCurrentlyActive(updated)) {
+                RuntimeLog.i(TAG, "toggle: inside active window, starting MonitoringService now")
+                MonitoringService.start(context)
+            }
         } else {
             alarmScheduler.cancelAlarms(session)
         }
