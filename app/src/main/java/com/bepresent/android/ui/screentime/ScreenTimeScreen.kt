@@ -146,74 +146,82 @@ private fun ScreenTimeContent(
             modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp)
         )
 
-        // Total time ring
-        CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Column(
+        // Single outer white card containing everything
+        CardV2(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .weight(1f)
+        ) {
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(
-                        progress = (totalScreenTimeMs.toFloat() / MAX_SCREEN_TIME_MS).coerceIn(0f, 1f),
-                        modifier = Modifier.size(140.dp),
-                        strokeWidth = 12.dp,
-                        color = HomeV2Tokens.BrandPrimary,
-                        trackColor = HomeV2Tokens.Neutral200,
-                        strokeCap = StrokeCap.Round
+                // Total time ring
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                progress = (totalScreenTimeMs.toFloat() / MAX_SCREEN_TIME_MS).coerceIn(0f, 1f),
+                                modifier = Modifier.size(140.dp),
+                                strokeWidth = 12.dp,
+                                color = HomeV2Tokens.BrandPrimary,
+                                trackColor = HomeV2Tokens.Neutral200,
+                                strokeCap = StrokeCap.Round
+                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = formatDuration(totalScreenTimeMs),
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = HomeV2Tokens.NeutralBlack
+                                )
+                                Text(
+                                    text = "today",
+                                    fontSize = 13.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // "Apps" section title
+                item {
+                    Text(
+                        text = "Apps",
+                        style = HomeV2Tokens.CardTitleStyle,
+                        color = HomeV2Tokens.NeutralBlack,
+                        modifier = Modifier.padding(top = 4.dp, start = 4.dp)
                     )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = formatDuration(totalScreenTimeMs),
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = HomeV2Tokens.NeutralBlack
-                        )
-                        Text(
-                            text = "today",
-                            fontSize = 13.sp,
-                            color = Color.Gray
+                }
+
+                // Per-app inner cards
+                items(launchableApps) { app ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(HomeV2Tokens.Neutral200.copy(alpha = 0.5f))
+                            .padding(vertical = 4.dp)
+                    ) {
+                        AppUsageRow(
+                            app = app,
+                            maxTimeMs = maxAppTimeMs,
+                            pm = pm
                         )
                     }
                 }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // App list
-        CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp, bottom = 8.dp, start = 20.dp, end = 20.dp)
-            ) {
-                Text(
-                    text = "Apps",
-                    style = HomeV2Tokens.CardTitleStyle,
-                    color = HomeV2Tokens.NeutralBlack
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+                // Bottom spacing for nav bar
+                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
-        }
-
-        // Scrollable app list (outside CardV2 for proper scrolling)
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            items(launchableApps) { app ->
-                AppUsageRow(
-                    app = app,
-                    maxTimeMs = maxAppTimeMs,
-                    pm = pm
-                )
-            }
-            // Bottom spacing for nav bar
-            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
 }
