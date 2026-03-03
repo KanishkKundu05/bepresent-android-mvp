@@ -59,8 +59,8 @@ object HomeV2Tokens {
     // Typography styles (using system font — swap to FFF Acid Grotesk if font file added)
     val TimerDigitStyle = TextStyle(
         fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        letterSpacing = (-1).sp
+        fontSize = 90.sp,
+        letterSpacing = (-2).sp
     )
 
     val TimerLabelStyle = TextStyle(
@@ -123,18 +123,18 @@ fun BackgroundV2(
             .fillMaxSize()
             .drawBehind {
                 val colors = listOf(
-                    Color(0xFFD0EAFF),  // Lighter center
-                    Color(0xFF8FCCFF),  // Softer mid-tone
-                    Color(0xFF5A9FFF)   // Lighter edge (was #003BFF)
+                    Color(0xFF003BFF),  // Deep blue center (matches Block Now button)
+                    Color(0xFF5A9FFF),  // Mid-tone
+                    Color(0xFFD0EAFF)   // Light blue edge
                 )
                 val centerY = -size.height * 0.15f
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = colors,
                         center = Offset(size.width / 2f, centerY),
-                        radius = size.height * 0.75f
+                        radius = size.height * 0.56f
                     ),
-                    radius = size.height * 0.75f,
+                    radius = size.height * 0.56f,
                     center = Offset(size.width / 2f, centerY)
                 )
             }
