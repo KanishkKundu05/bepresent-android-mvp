@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,19 +29,31 @@ import com.bepresent.android.ui.onboarding.v2.screens.*
 
 @Composable
 fun OnboardingV2Screen(
-    viewModel: OnboardingViewModel = hiltViewModel()
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    onComplete: () -> Unit = {}
 ) {
     val currentIndex by viewModel.currentIndex.collectAsState()
+    val incomingIndex by viewModel.incomingIndex.collectAsState()
     val isAnimating by viewModel.isAnimating.collectAsState()
-    val offset by viewModel.offset.asState()
-    val screen = viewModel.screens.getOrElse(currentIndex) { viewModel.screens.last() }
+    val isComplete by viewModel.isComplete.collectAsState()
+    val currentOffset by viewModel.offset.asState()
+    val incomingOffsetValue by viewModel.incomingOffset.asState()
+
+    LaunchedEffect(isComplete) {
+        if (isComplete) onComplete()
+    }
+
+    val currentScreen = viewModel.screens.getOrElse(currentIndex) { viewModel.screens.last() }
+    val incomingScreen = incomingIndex?.let { viewModel.screens.getOrElse(it) { null } }
+    // Use incoming screen for chrome (gradient, progress bar, button) during transitions
+    val displayScreen = incomingScreen ?: currentScreen
 
     val screenWidthPx = with(LocalDensity.current) {
         LocalConfiguration.current.screenWidthDp.dp.toPx()
     }
 
     // Animated gradient background
-    val targetGradient = screen.gradientType
+    val targetGradient = displayScreen.gradientType
     val gradientProgress by animateFloatAsState(
         targetValue = when (targetGradient) {
             GradientType.Blue -> 0f
@@ -67,32 +80,52 @@ fun OnboardingV2Screen(
                 .systemBarsPadding()
         ) {
             // Progress bar (only on screens that show it)
-            if (screen.showProgressBar) {
+            if (displayScreen.showProgressBar) {
                 OnboardingProgressBar(
-                    currentStep = currentIndex.toFloat(),
+                    currentStep = (incomingIndex ?: currentIndex).toFloat(),
                     totalSteps = viewModel.totalScreens.toFloat(),
                     onBack = { viewModel.goBack() },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                 )
             }
 
-            // Screen content with slide animation
+            // Screen content area — both screens visible during transitions
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .offset { IntOffset((offset * screenWidthPx).roundToInt(), 0) }
             ) {
-                ScreenRouter(
-                    screen = screen,
-                    viewModel = viewModel
-                )
+                // Current screen (slides out during transition)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset { IntOffset((currentOffset * screenWidthPx).roundToInt(), 0) }
+                ) {
+                    ScreenRouter(
+                        screen = currentScreen,
+                        viewModel = viewModel
+                    )
+                }
+
+                // Incoming screen (slides in during transition)
+                if (incomingScreen != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset { IntOffset((incomingOffsetValue * screenWidthPx).roundToInt(), 0) }
+                    ) {
+                        ScreenRouter(
+                            screen = incomingScreen,
+                            viewModel = viewModel
+                        )
+                    }
+                }
             }
 
             // Bottom button (if this screen has one)
-            if (screen.buttonConfig == ButtonConfig.Full) {
+            if (displayScreen.buttonConfig == ButtonConfig.Full) {
                 OnboardingContinueButton(
-                    title = screen.buttonTitle,
+                    title = displayScreen.buttonTitle,
                     onClick = { viewModel.advance() },
                     enabled = !isAnimating,
                     modifier = Modifier.padding(

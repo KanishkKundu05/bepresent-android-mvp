@@ -76,6 +76,10 @@ class PaywallViewModel @Inject constructor(
 
     fun skipPaywall() {
         analyticsManager.track(AnalyticsEvents.SKIPPED_PAYWALL)
+        viewModelScope.launch {
+            subscriptionManager.recordSuccessfulPayment()
+            _uiState.value = _uiState.value.copy(subscriptionSuccess = true)
+        }
     }
 
     fun clearError() {

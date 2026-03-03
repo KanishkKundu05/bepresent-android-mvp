@@ -30,6 +30,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.clickable
+import com.bepresent.android.BuildConfig
 import com.bepresent.android.R
 import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
 import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
@@ -244,6 +246,18 @@ fun PaywallScreen(
                     color = OnboardingTokens.Neutral800,
                     textAlign = TextAlign.Center
                 )
+
+                // Dev skip for testing
+                if (BuildConfig.DEBUG) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Skip for now (dev only)",
+                        style = OnboardingTypography.caption2,
+                        color = OnboardingTokens.Neutral800.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.clickable { viewModel.skipPaywall() }
+                    )
+                }
             }
         }
     }

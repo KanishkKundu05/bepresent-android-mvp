@@ -13,8 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -44,12 +44,14 @@ fun UserWhyScreen() {
                 contentDescription = "Phone screenshot",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                contentScale = ContentScale.Fit
+                    .weight(1f)
+                    .clipToBounds(),
+                contentScale = ContentScale.FillWidth,
+                alignment = Alignment.TopCenter
             )
         }
 
-        // Bottom gradient overlay
+        // Bottom gradient overlay — uses exact background gradient color for seamless blend
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -58,8 +60,8 @@ fun UserWhyScreen() {
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFFBBC5FF).copy(alpha = 0f),
-                            Color(0xFF93D1FE)
+                            OnboardingTokens.BlueGradientBottom.copy(alpha = 0f),
+                            OnboardingTokens.BlueGradientBottom
                         )
                     )
                 )

@@ -25,8 +25,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -104,14 +109,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BePresentTheme {
-                MainAppContent(analyticsManager)
+                MainAppContent(analyticsManager, preferencesManager)
             }
         }
     }
 }
 
 @Composable
-private fun MainAppContent(analyticsManager: AnalyticsManager) {
+private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManager: PreferencesManager) {
+    // Check onboarding status before rendering NavHost to avoid flash
+    var startDestination by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        val completed = preferencesManager.onboardingCompleted.first()
+        startDestination = if (completed) BottomTab.Home.route else "onboarding"
+    }
+    val resolvedStart = startDestination ?: return // Don't render until resolved
+
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -166,8 +179,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = BottomTab.Home.route,
-            modifier = Modifier.padding(innerPadding),
+            startDestination = resolvedStart,
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
@@ -176,63 +188,86 @@ private fun MainAppContent(analyticsManager: AnalyticsManager) {
             // Home tab — new HomeV2
             composable(BottomTab.Home.route) {
                 val viewModel: HomeV2ViewModel = hiltViewModel()
-                HomeV2Screen(
-                    viewModel = viewModel,
-                    onLeaderboardClick = { navController.navigate(BottomTab.LeaderboardTab.route) },
-                    onDevClick = { navController.navigate("dev") }
-                )
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    HomeV2Screen(
+                        viewModel = viewModel,
+                        onLeaderboardClick = { navController.navigate(BottomTab.LeaderboardTab.route) },
+                        onDevClick = { navController.navigate("dev") }
+                    )
+                }
             }
 
             // Schedules tab
             composable(BottomTab.Schedules.route) {
                 val viewModel: SchedulesViewModel = hiltViewModel()
-                SchedulesScreen(viewModel = viewModel)
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    SchedulesScreen(viewModel = viewModel)
+                }
             }
 
             // Leaderboard tab
             composable(BottomTab.LeaderboardTab.route) {
-                LeaderboardScreen(
-                    onBack = { navController.popBackStack() }
-                )
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    LeaderboardScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
 
             // Screen Time tab
             composable(BottomTab.ScreenTime.route) {
                 val viewModel: ScreenTimeViewModel = hiltViewModel()
-                ScreenTimeScreen(viewModel = viewModel)
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    ScreenTimeScreen(viewModel = viewModel)
+                }
             }
 
             // Social tab — accountability partners
             composable(BottomTab.Social.route) {
                 val viewModel: SocialViewModel = hiltViewModel()
-                SocialScreen(viewModel = viewModel)
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    SocialScreen(viewModel = viewModel)
+                }
             }
 
             // Detail screens (no bottom bar)
             composable("dev") {
-                DevScreen(
-                    onBack = { navController.popBackStack() },
-                    onNavigateToOnboarding = { navController.navigate("onboarding") }
-                )
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    DevScreen(
+                        onBack = { navController.popBackStack() },
+                        onNavigateToOnboarding = { navController.navigate("onboarding") }
+                    )
+                }
             }
+            // Onboarding: no innerPadding so gradient extends behind status bar
             composable("onboarding") {
-                OnboardingV2Screen()
-            }
-            composable("profile") {
-                ProfileScreen(
-                    onBack = { navController.popBackStack() },
-                    onPartnerClick = { partnerId ->
-                        navController.navigate("partner/$partnerId")
+                OnboardingV2Screen(
+                    onComplete = {
+                        navController.navigate(BottomTab.Home.route) {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
                     }
                 )
+            }
+            composable("profile") {
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    ProfileScreen(
+                        onBack = { navController.popBackStack() },
+                        onPartnerClick = { partnerId ->
+                            navController.navigate("partner/$partnerId")
+                        }
+                    )
+                }
             }
             composable(
                 "partner/{partnerId}",
                 arguments = listOf(navArgument("partnerId") { type = NavType.StringType })
             ) {
-                PartnerScreen(
-                    onBack = { navController.popBackStack() }
-                )
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    PartnerScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

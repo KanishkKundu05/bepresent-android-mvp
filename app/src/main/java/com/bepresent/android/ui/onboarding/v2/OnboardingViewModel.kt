@@ -16,6 +16,7 @@ import com.bepresent.android.ui.onboarding.v2.util.calculateYearsOnPhone
 import com.bepresent.android.ui.onboarding.v2.util.screenTimeAnswerToHours
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,11 +44,21 @@ class OnboardingViewModel @Inject constructor(
     /** Offset for slide animation: -1 = exited left, 0 = center, +1 = exited right */
     val offset = Animatable(0f)
 
+    /** Index of the incoming screen during a transition (null when idle). */
+    private val _incomingIndex = MutableStateFlow<Int?>(null)
+    val incomingIndex: StateFlow<Int?> = _incomingIndex.asStateFlow()
+
+    /** Offset for the incoming screen during a simultaneous slide. */
+    val incomingOffset = Animatable(0f)
+
     private val _answers = MutableStateFlow<Map<String, String>>(emptyMap())
     val answers: StateFlow<Map<String, String>> = _answers.asStateFlow()
 
     private val _username = MutableStateFlow("")
     val username: StateFlow<String> = _username.asStateFlow()
+
+    private val _isComplete = MutableStateFlow(false)
+    val isComplete: StateFlow<Boolean> = _isComplete.asStateFlow()
 
     /** Frame clock backed by Android Choreographer so Animatable works in viewModelScope. */
     private val frameClock = object : MonotonicFrameClock {
@@ -99,17 +110,36 @@ class OnboardingViewModel @Inject constructor(
             val currentScreen = screens[_currentIndex.value]
             val targetScreen = screens[targetIndex]
 
-            // Phase 1: slide current screen out
+            // Determine animation specs
             val outAnim = if (forward) currentScreen.outroAnimation else targetScreen.introAnimation
             val outSpec = when (outAnim) {
                 ScreenAnimation.Intro -> OnboardingAnimSpecs.introOut<Float>()
                 ScreenAnimation.Drawer -> OnboardingAnimSpecs.drawerOut<Float>()
             }
             val outTarget = if (forward) -1f else 1f
-            offset.animateTo(outTarget, outSpec)
 
-            // Swap screen
+            val inAnim = if (forward) targetScreen.introAnimation else currentScreen.outroAnimation
+            val inSpec = when (inAnim) {
+                ScreenAnimation.Intro -> OnboardingAnimSpecs.introIn<Float>()
+                ScreenAnimation.Drawer -> OnboardingAnimSpecs.drawerIn<Float>()
+            }
+            val inStart = if (forward) 1f else -1f
+
+            // Show incoming screen and position it off-screen
+            _incomingIndex.value = targetIndex
+            incomingOffset.snapTo(inStart)
+
+            // Animate both screens simultaneously
+            coroutineScope {
+                launch { offset.animateTo(outTarget, outSpec) }
+                launch { incomingOffset.animateTo(0f, inSpec) }
+            }
+
+            // Swap: incoming becomes current
             _currentIndex.value = targetIndex
+            offset.snapTo(0f)
+            _incomingIndex.value = null
+
             saveProgress()
 
             // Track screen view
@@ -117,16 +147,6 @@ class OnboardingViewModel @Inject constructor(
                 AnalyticsEvents.VIEWED_ONBOARDING_SCREEN,
                 mapOf("screen_name" to (screens[targetIndex]::class.simpleName ?: "Unknown"))
             )
-
-            // Phase 2: position new screen off-screen on opposite side, then slide in
-            val inAnim = if (forward) targetScreen.introAnimation else currentScreen.outroAnimation
-            val inSpec = when (inAnim) {
-                ScreenAnimation.Intro -> OnboardingAnimSpecs.introIn<Float>()
-                ScreenAnimation.Drawer -> OnboardingAnimSpecs.drawerIn<Float>()
-            }
-            val inStart = if (forward) 1f else -1f
-            offset.snapTo(inStart)
-            offset.animateTo(0f, inSpec)
 
             _isAnimating.value = false
         }
@@ -231,6 +251,7 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             preferencesManager.setOnboardingCompleted(true)
             preferencesManager.clearOnboardingV2Progress()
+            _isComplete.value = true
         }
     }
 

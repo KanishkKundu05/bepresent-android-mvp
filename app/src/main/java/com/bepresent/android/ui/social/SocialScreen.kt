@@ -97,22 +97,7 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
     Box(modifier = Modifier.fillMaxSize()) {
         BackgroundV2()
 
-        if (!viewModel.isAuthenticated) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = statusBarTop)
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Sign in to add accountability partners",
-                    fontSize = 16.sp,
-                    color = Color.White
-                )
-            }
-        } else if (uiState.isLoading) {
+        if (uiState.isLoading) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
