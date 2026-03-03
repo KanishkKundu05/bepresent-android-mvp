@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
@@ -46,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -128,7 +130,7 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
+                        .padding(start = 20.dp, end = 16.dp, top = 12.dp, bottom = 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -147,6 +149,14 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
                     }
                 }
 
+                // Subtitle
+                Text(
+                    text = "They\u2019ll get a text when you break your intentions",
+                    fontSize = 13.sp,
+                    color = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
+                )
+
                 if (uiState.partners.isEmpty()) {
                     // Empty state
                     CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -156,19 +166,27 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
                                 .padding(32.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = null,
+                                modifier = Modifier.size(36.dp),
+                                tint = HomeV2Tokens.BrandPrimary
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "No partners yet",
+                                text = "Add an Accountability Partner",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = HomeV2Tokens.NeutralBlack
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Add a contact from your phone to keep each other accountable",
+                                text = "Pick a contact and they\u2019ll be notified via text message when you break your screen time intentions. Stay honest, stay focused.",
                                 fontSize = 14.sp,
-                                color = Color.Gray
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(20.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
                             Button(
                                 onClick = onAddPartnerClick,
                                 colors = ButtonDefaults.buttonColors(
