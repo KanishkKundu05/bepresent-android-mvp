@@ -2,6 +2,8 @@ package com.bepresent.android.ui.onboarding.v2.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bepresent.android.data.analytics.AnalyticsEvents
+import com.bepresent.android.data.analytics.AnalyticsManager
 import com.bepresent.android.data.subscription.SubscriptionManager
 import com.stripe.android.paymentsheet.PaymentSheetResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,11 +22,16 @@ data class PaywallUiState(
 
 @HiltViewModel
 class PaywallViewModel @Inject constructor(
-    private val subscriptionManager: SubscriptionManager
+    private val subscriptionManager: SubscriptionManager,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PaywallUiState())
     val uiState: StateFlow<PaywallUiState> = _uiState.asStateFlow()
+
+    init {
+        analyticsManager.track(AnalyticsEvents.VIEWED_PAYWALL)
+    }
 
     fun startSubscription() {
         if (_uiState.value.isLoading) return
@@ -65,6 +72,10 @@ class PaywallViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun skipPaywall() {
+        analyticsManager.track(AnalyticsEvents.SKIPPED_PAYWALL)
     }
 
     fun clearError() {

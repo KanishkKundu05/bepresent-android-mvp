@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.bepresent.android.data.analytics.AnalyticsManager
 import com.bepresent.android.data.convex.ConvexManager
 import com.bepresent.android.data.convex.SyncWorker
 import com.stripe.android.PaymentConfiguration
@@ -24,6 +25,9 @@ class BePresentApp : Application(), Configuration.Provider {
     @Inject
     lateinit var convexManager: ConvexManager
 
+    @Inject
+    lateinit var analyticsManager: AnalyticsManager
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
@@ -37,6 +41,8 @@ class BePresentApp : Application(), Configuration.Provider {
             PaymentConfiguration.init(this, BuildConfig.STRIPE_PUBLISHABLE_KEY)
         }
         createNotificationChannels()
+        analyticsManager.initialize()
+        analyticsManager.detectAppInstallAndUpdate()
         com.bepresent.android.features.intentions.DailyResetWorker.schedule(this)
         SyncWorker.schedulePeriodic(this)
 

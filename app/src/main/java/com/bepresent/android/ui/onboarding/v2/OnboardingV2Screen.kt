@@ -142,7 +142,10 @@ private fun ScreenRouter(
             onComplete = { viewModel.advance() }
         )
         is OnboardingScreenType.NotificationPermission -> NotificationPermissionScreen(
-            onComplete = { viewModel.advance() }
+            onComplete = { viewModel.advance() },
+            onEnableClicked = { viewModel.trackClickedEnableNotifications() },
+            onMaybeLater = { viewModel.trackMaybeLaterNotifications() },
+            onPermissionResult = { granted -> viewModel.trackNotificationPermissionResult(granted) }
         )
         is OnboardingScreenType.SevenDayChallenge -> SevenDayChallengeScreen(
             yearsOnPhone = viewModel.yearsOnPhone,

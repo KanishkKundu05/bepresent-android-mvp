@@ -32,10 +32,16 @@ import com.bepresent.android.ui.onboarding.v2.components.OnboardingButtonAppeara
  * when the user taps "Enable Notifications". Below API 33 it advances directly.
  */
 @Composable
-fun NotificationPermissionScreen(onComplete: () -> Unit) {
+fun NotificationPermissionScreen(
+    onComplete: () -> Unit,
+    onEnableClicked: () -> Unit = {},
+    onMaybeLater: () -> Unit = {},
+    onPermissionResult: (Boolean) -> Unit = {}
+) {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* granted or denied — advance either way */
+    ) { granted ->
+        onPermissionResult(granted)
         onComplete()
     }
 
@@ -81,16 +87,21 @@ fun NotificationPermissionScreen(onComplete: () -> Unit) {
             title = "Enable Notifications",
             appearance = OnboardingButtonAppearance.Primary,
             onClick = {
+                onEnableClicked()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
+                    onPermissionResult(true)
                     onComplete()
                 }
             },
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        TextButton(onClick = onComplete) {
+        TextButton(onClick = {
+            onMaybeLater()
+            onComplete()
+        }) {
             Text(
                 "Maybe Later",
                 style = OnboardingTypography.label,

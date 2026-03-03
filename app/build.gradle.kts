@@ -80,6 +80,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
 
     // Compose BOM
@@ -130,6 +131,9 @@ dependencies {
 
     // Lottie
     implementation("com.airbnb.android:lottie-compose:6.3.0")
+
+    // Mixpanel Analytics
+    implementation("com.mixpanel.android:mixpanel-android:7.5.1")
 
     // Stripe
     implementation("com.stripe:stripe-android:20.48.3")

@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -39,6 +42,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.bepresent.android.data.analytics.AnalyticsEvents
+import com.bepresent.android.data.analytics.AnalyticsManager
 import com.bepresent.android.data.datastore.PreferencesManager
 import com.bepresent.android.ui.dev.DevScreen
 import com.bepresent.android.ui.homev2.HomeV2Screen
@@ -62,13 +67,14 @@ import javax.inject.Inject
 enum class BottomTab(
     val route: String,
     val label: String,
-    val icon: ImageVector
+    val icon: ImageVector,
+    val analyticsEvent: String
 ) {
-    Home("home", "Home", Icons.Default.Home),
-    Schedules("schedules", "Schedules", Icons.Default.CalendarMonth),
-    LeaderboardTab("leaderboard", "Leaderboard", Icons.Default.Leaderboard),
-    ScreenTime("screentime", "Screen Time", Icons.Default.PhoneAndroid),
-    Social("social", "Social", Icons.Default.Groups)
+    Home("home", "Home", Icons.Default.Home, AnalyticsEvents.CLICKED_HOME),
+    Schedules("schedules", "Schedules", Icons.Default.CalendarMonth, AnalyticsEvents.CLICKED_SCHEDULES),
+    LeaderboardTab("leaderboard", "Leaderboard", Icons.Default.Leaderboard, AnalyticsEvents.CLICKED_LEADERBOARD),
+    ScreenTime("screentime", "Screen Time", Icons.Default.PhoneAndroid, AnalyticsEvents.CLICKED_SCREEN_TIME),
+    Social("social", "Social", Icons.Default.Groups, AnalyticsEvents.CLICKED_SOCIAL)
 }
 
 @AndroidEntryPoint
@@ -77,20 +83,35 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var preferencesManager: PreferencesManager
 
+    @Inject
+    lateinit var analyticsManager: AnalyticsManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Track app foreground/background via ProcessLifecycleOwner
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                analyticsManager.track(AnalyticsEvents.APPLICATION_FOREGROUNDED)
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                analyticsManager.track(AnalyticsEvents.APPLICATION_BACKGROUNDED)
+                analyticsManager.flush()
+            }
+        })
+
         setContent {
             BePresentTheme {
-                // DEV: skip onboarding, go straight to home
-                MainAppContent()
+                MainAppContent(analyticsManager)
             }
         }
     }
 }
 
 @Composable
-private fun MainAppContent() {
+private fun MainAppContent(analyticsManager: AnalyticsManager) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -123,6 +144,7 @@ private fun MainAppContent() {
                             },
                             selected = currentRoute == tab.route,
                             onClick = {
+                                analyticsManager.track(tab.analyticsEvent)
                                 navController.navigate(tab.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true

@@ -5,6 +5,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.MonotonicFrameClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bepresent.android.data.analytics.AnalyticsEvents
+import com.bepresent.android.data.analytics.AnalyticsManager
 import com.bepresent.android.data.datastore.PreferencesManager
 import com.bepresent.android.data.subscription.SubscriptionManager
 import com.bepresent.android.ui.onboarding.v2.animation.OnboardingAnimSpecs
@@ -26,7 +28,8 @@ import kotlin.coroutines.resume
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
-    private val subscriptionManager: SubscriptionManager
+    private val subscriptionManager: SubscriptionManager,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     val screens: List<OnboardingScreenType> = buildOnboardingScreens()
@@ -109,6 +112,12 @@ class OnboardingViewModel @Inject constructor(
             _currentIndex.value = targetIndex
             saveProgress()
 
+            // Track screen view
+            analyticsManager.track(
+                AnalyticsEvents.VIEWED_ONBOARDING_SCREEN,
+                mapOf("screen_name" to (screens[targetIndex]::class.simpleName ?: "Unknown"))
+            )
+
             // Phase 2: position new screen off-screen on opposite side, then slide in
             val inAnim = if (forward) targetScreen.introAnimation else currentScreen.outroAnimation
             val inSpec = when (inAnim) {
@@ -133,6 +142,28 @@ class OnboardingViewModel @Inject constructor(
     fun setAnswer(key: String, value: String) {
         _answers.value = _answers.value + (key to value)
         viewModelScope.launch { saveAnswers() }
+
+        // Track the answer
+        analyticsManager.track(
+            AnalyticsEvents.ANSWERED_ONBOARDING_QUESTION,
+            mapOf("question" to key, "answer" to value)
+        )
+
+        // Track specific answer events
+        when (key) {
+            "Age" -> analyticsManager.track(
+                AnalyticsEvents.SET_AGE,
+                mapOf("age" to value)
+            )
+            "ScreenTime" -> analyticsManager.track(
+                AnalyticsEvents.SET_SCREEN_TIME_ESTIMATE,
+                mapOf("estimate" to value)
+            )
+            "Acquisition", "acquisition" -> analyticsManager.track(
+                AnalyticsEvents.ANSWERED_ACQUISITION_QUESTION,
+                mapOf("selection" to value, "other_text" to "")
+            )
+        }
     }
 
     fun getAnswer(key: String): String? = _answers.value[key]
@@ -196,6 +227,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun completeOnboarding() {
+        analyticsManager.track(AnalyticsEvents.COMPLETED_ONBOARDING)
         viewModelScope.launch {
             preferencesManager.setOnboardingCompleted(true)
             preferencesManager.clearOnboardingV2Progress()
@@ -203,8 +235,26 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun saveUsername() {
+        analyticsManager.track(AnalyticsEvents.ENTERED_USERNAME)
         viewModelScope.launch {
             preferencesManager.setOnboardingV2Username(_username.value)
         }
+    }
+
+    // ── Notification Permission Tracking ──
+
+    fun trackClickedEnableNotifications() {
+        analyticsManager.track(AnalyticsEvents.CLICKED_ENABLE_NOTIFICATIONS)
+    }
+
+    fun trackMaybeLaterNotifications() {
+        analyticsManager.track(AnalyticsEvents.TAPPED_MAYBE_LATER_NOTIFICATIONS)
+    }
+
+    fun trackNotificationPermissionResult(granted: Boolean) {
+        analyticsManager.track(
+            AnalyticsEvents.NOTIFICATION_PERMISSION_RESULT,
+            mapOf("granted" to granted)
+        )
     }
 }

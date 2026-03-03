@@ -2,6 +2,8 @@ package com.bepresent.android.ui.homev2
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bepresent.android.data.analytics.AnalyticsEvents
+import com.bepresent.android.data.analytics.AnalyticsManager
 import com.bepresent.android.data.datastore.PreferencesManager
 import com.bepresent.android.data.db.AppIntention
 import com.bepresent.android.data.db.PresentSession
@@ -59,7 +61,8 @@ class HomeV2ViewModel @Inject constructor(
     private val intentionManager: IntentionManager,
     private val sessionManager: SessionManager,
     private val preferencesManager: PreferencesManager,
-    private val permissionManager: PermissionManager
+    private val permissionManager: PermissionManager,
+    private val analyticsManager: AnalyticsManager
 ) : ViewModel() {
 
     private val _screenState = MutableStateFlow(HomeScreenState.Idle)

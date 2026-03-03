@@ -1,6 +1,8 @@
 package com.bepresent.android.features.sessions
 
 import android.content.Context
+import com.bepresent.android.data.analytics.AnalyticsEvents
+import com.bepresent.android.data.analytics.AnalyticsManager
 import com.bepresent.android.data.convex.SyncManager
 import com.bepresent.android.data.convex.SyncWorker
 import com.bepresent.android.data.datastore.PreferencesManager
@@ -25,7 +27,8 @@ class SessionManager @Inject constructor(
     private val intentionDao: AppIntentionDao,
     private val preferencesManager: PreferencesManager,
     private val syncManager: SyncManager,
-    private val sessionAlarmScheduler: SessionAlarmScheduler
+    private val sessionAlarmScheduler: SessionAlarmScheduler,
+    private val analyticsManager: AnalyticsManager
 ) {
     fun observeActiveSession(): Flow<PresentSession?> = sessionDao.observeActiveSession()
 
@@ -67,6 +70,16 @@ class SessionManager @Inject constructor(
         sessionAlarmScheduler.scheduleGoalAlarm(id, now + (goalDurationMinutes * 60 * 1000L))
         RuntimeLog.d(TAG, "createAndStart: session saved, starting MonitoringService")
         MonitoringService.start(context)
+
+        analyticsManager.track(
+            AnalyticsEvents.STARTED_PRESENT_SESSION,
+            mapOf(
+                "session_id" to id,
+                "goal_duration_minutes" to goalDurationMinutes,
+                "beast_mode" to beastMode,
+                "session_name" to name
+            )
+        )
 
         return session
     }
@@ -146,6 +159,29 @@ class SessionManager @Inject constructor(
                 action = transition.action
             )
         )
+
+        if (transition.setEndedAt) {
+            val durationSeconds = ((updated.endedAt ?: now) - (session.startedAt ?: now)) / 1000L
+            val outcome = when (updated.state) {
+                PresentSession.STATE_COMPLETED -> "completed"
+                PresentSession.STATE_GAVE_UP -> "gave_up"
+                PresentSession.STATE_CANCELED -> "canceled"
+                else -> updated.state
+            }
+            analyticsManager.track(
+                AnalyticsEvents.ENDED_PRESENT_SESSION,
+                mapOf(
+                    "session_id" to sessionId,
+                    "goal_duration_minutes" to session.goalDurationMinutes,
+                    "beast_mode" to session.beastMode,
+                    "session_name" to session.name,
+                    "outcome" to outcome,
+                    "earned_xp" to (updated.earnedXp),
+                    "earned_coins" to (updated.earnedCoins),
+                    "duration_seconds" to durationSeconds
+                )
+            )
+        }
 
         if (transition.cancelAlarm) {
             sessionAlarmScheduler.cancelGoalAlarm(sessionId)
