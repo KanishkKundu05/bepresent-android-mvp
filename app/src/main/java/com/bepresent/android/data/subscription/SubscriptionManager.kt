@@ -30,8 +30,12 @@ class SubscriptionManager @Inject constructor(
         }
 
     suspend fun createSubscription(): CreateSubscriptionResult = withContext(Dispatchers.IO) {
+        val baseUrl = convexUrl
+        if (baseUrl.isBlank()) {
+            throw SubscriptionException("Backend URL is not configured")
+        }
         val deviceId = preferencesManager.getOrCreateDeviceUuid()
-        val url = URL("$convexUrl/stripe/create-subscription")
+        val url = URL("$baseUrl/stripe/create-subscription")
         val connection = url.openConnection() as HttpURLConnection
 
         try {

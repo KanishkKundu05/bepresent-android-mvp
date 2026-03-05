@@ -1,8 +1,6 @@
 package com.bepresent.android.ui.onboarding.v2.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
@@ -20,12 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,7 +33,6 @@ import com.bepresent.android.ui.onboarding.v2.components.OnboardingContinueButto
 import com.bepresent.android.ui.onboarding.v2.components.OnboardingButtonAppearance
 import com.stripe.android.paymentsheet.PaymentSheet
 import com.stripe.android.paymentsheet.rememberPaymentSheet
-import kotlinx.coroutines.delay
 
 private val PAYWALL_FEATURES = listOf(
     "7-day screen time challenge",
@@ -62,18 +55,22 @@ fun PaywallScreen(
     // When we get a clientSecret, present PaymentSheet
     LaunchedEffect(uiState.clientSecret) {
         val secret = uiState.clientSecret ?: return@LaunchedEffect
-        paymentSheet.presentWithPaymentIntent(
-            paymentIntentClientSecret = secret,
-            configuration = PaymentSheet.Configuration.Builder("BePresent")
-                .googlePay(
-                    PaymentSheet.GooglePayConfiguration(
-                        environment = PaymentSheet.GooglePayConfiguration.Environment.Test,
-                        countryCode = "US",
-                        currencyCode = "USD"
+        try {
+            paymentSheet.presentWithPaymentIntent(
+                paymentIntentClientSecret = secret,
+                configuration = PaymentSheet.Configuration.Builder("BePresent")
+                    .googlePay(
+                        PaymentSheet.GooglePayConfiguration(
+                            environment = PaymentSheet.GooglePayConfiguration.Environment.Test,
+                            countryCode = "US",
+                            currencyCode = "USD"
+                        )
                     )
-                )
-                .build()
-        )
+                    .build()
+            )
+        } catch (e: Exception) {
+            viewModel.onPaymentSheetError(e.message ?: "Failed to open payment sheet")
+        }
     }
 
     // On subscription success, advance
@@ -83,38 +80,9 @@ fun PaywallScreen(
         }
     }
 
-    // Animation keyframes (same pattern as SevenDayChallengeScreen)
-    var keyframe by remember { mutableIntStateOf(0) }
-    var visibleFeatures by remember { mutableIntStateOf(0) }
-
-    val heroScale by animateFloatAsState(
-        targetValue = when {
-            keyframe < 2 -> 0.1f
-            keyframe == 2 -> 1.07f
-            else -> 1f
-        },
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 120f),
-        label = "hero_scale"
-    )
-
-    LaunchedEffect(Unit) {
-        delay(200)
-        keyframe = 1
-        delay(250)
-        keyframe = 2
-        delay(300)
-        keyframe = 3
-        delay(400)
-        keyframe = 4
-
-        for (i in 1..PAYWALL_FEATURES.size) {
-            delay(200)
-            visibleFeatures = i
-        }
-
-        delay(300)
-        keyframe = 5 // show price + button
-    }
+    // No animation — show everything immediately
+    val keyframe = 5
+    val visibleFeatures = PAYWALL_FEATURES.size
 
     Column(
         modifier = Modifier
@@ -131,7 +99,7 @@ fun PaywallScreen(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.scale(heroScale)
+                modifier = Modifier
             ) {
                 Text(
                     text = "\uD83D\uDD13", // 🔓

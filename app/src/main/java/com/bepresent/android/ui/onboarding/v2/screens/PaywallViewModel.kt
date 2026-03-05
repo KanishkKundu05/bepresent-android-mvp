@@ -6,6 +6,7 @@ import com.bepresent.android.data.analytics.AnalyticsEvents
 import com.bepresent.android.data.analytics.AnalyticsManager
 import com.bepresent.android.data.subscription.SubscriptionManager
 import com.stripe.android.paymentsheet.PaymentSheetResult
+import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,11 +41,13 @@ class PaywallViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = subscriptionManager.createSubscription()
+                Log.d("PaywallViewModel", "Subscription created, presenting payment sheet")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     clientSecret = result.clientSecret
                 )
             } catch (e: Exception) {
+                Log.e("PaywallViewModel", "Failed to create subscription", e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = e.message ?: "Something went wrong. Please try again."
@@ -80,6 +83,14 @@ class PaywallViewModel @Inject constructor(
             subscriptionManager.recordSuccessfulPayment()
             _uiState.value = _uiState.value.copy(subscriptionSuccess = true)
         }
+    }
+
+    fun onPaymentSheetError(message: String) {
+        _uiState.value = _uiState.value.copy(
+            clientSecret = null,
+            error = message,
+            isLoading = false
+        )
     }
 
     fun clearError() {
