@@ -127,7 +127,7 @@ class HomeV2ViewModel @Inject constructor(
             permissionsOk = permissionManager.checkAll().criticalGranted,
             totalBlockedTodayMs = blockedMs
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeV2UiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeV2UiState(days = generateDays()))
 
     init {
         // Poll blocked time every 5 seconds
