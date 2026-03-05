@@ -192,11 +192,11 @@ private fun ScreenRouter(
         )
         is OnboardingScreenType.ChooseUsername -> ChooseUsernameScreen(
             username = viewModel.username.collectAsState().value,
+            isLoading = viewModel.isUsernameLoading.collectAsState().value,
+            errorMessage = viewModel.usernameError.collectAsState().value,
             onUsernameChanged = { viewModel.setUsername(it) },
-            onConfirm = {
-                viewModel.saveUsername()
-                viewModel.advance()
-            }
+            onConfirm = { viewModel.saveUsername() },
+            onDismissError = { viewModel.dismissUsernameError() }
         )
         is OnboardingScreenType.SelectApps -> AppPickerOnboardingScreen(
             onComplete = { viewModel.advance() }
