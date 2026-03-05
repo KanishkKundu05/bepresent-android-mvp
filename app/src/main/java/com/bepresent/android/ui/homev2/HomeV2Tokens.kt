@@ -123,18 +123,19 @@ fun BackgroundV2(
             .fillMaxSize()
             .drawBehind {
                 val colors = listOf(
-                    Color(0xFFD0EAFF),  // Lighter center
-                    Color(0xFF8FCCFF),  // Softer mid-tone
-                    Color(0xFF5A9FFF)   // Lighter edge
+                    Color(0xFFABDDFF),  // blue3 — lightest center
+                    Color(0xFF55B7FF),  // blue2 — mid
+                    Color(0xFF003BFF)   // blue1 — darkest edge
                 )
-                val centerY = -size.height * 0.15f
+                val centerY = -size.height * 0.5f
+                val r = size.height * 0.5f
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = colors,
                         center = Offset(size.width / 2f, centerY),
-                        radius = size.height * 0.655f
+                        radius = r
                     ),
-                    radius = size.height * 0.655f,
+                    radius = r,
                     center = Offset(size.width / 2f, centerY)
                 )
             }
