@@ -37,6 +37,9 @@
     <!-- Wake lock for alarm handling -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- Bring app to foreground after permission grants -->
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
+
     <!-- Overlay: launch shield from background on Android 10+ -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 

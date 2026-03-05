@@ -1,5 +1,6 @@
 package com.bepresent.android.ui.onboarding.v2.screens
 
+import android.app.Activity
 import android.app.ActivityManager
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -151,6 +152,8 @@ fun PermissionsSetupScreen(onComplete: () -> Unit) {
         while (!check()) {
             delay(500)
         }
+        // Small delay to let the system fully process the permission change
+        delay(300)
         waitingForStep = -1
         bringAppToForeground(context)
     }
@@ -545,7 +548,16 @@ private fun openSettings(context: Context, intent: Intent, fallback: Intent) {
 }
 
 private fun bringAppToForeground(context: Context) {
-    // moveToFront works more reliably from background than startActivity
+    // Try moveTaskToFront with the Activity's actual task ID (most reliable)
+    val activity = context as? Activity
+    if (activity != null) {
+        try {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            am.moveTaskToFront(activity.taskId, ActivityManager.MOVE_TASK_WITH_HOME)
+            return
+        } catch (_: Exception) { }
+    }
+    // Fallback: try AppTask.moveToFront
     try {
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
         val appTasks = am?.appTasks
@@ -554,7 +566,7 @@ private fun bringAppToForeground(context: Context) {
             return
         }
     } catch (_: Exception) { }
-    // Fallback to launch intent
+    // Last resort: launch intent
     try {
         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return
         intent.addFlags(
