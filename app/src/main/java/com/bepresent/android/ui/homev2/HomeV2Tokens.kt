@@ -127,15 +127,14 @@ fun BackgroundV2(
                     Color(0xFF55B7FF),  // blue2 — mid
                     Color(0xFF003BFF)   // blue1 — darkest edge
                 )
-                val centerY = -size.height * 0.5f
-                val r = size.height * 0.5f
+                val centerY = -size.height * 0.15f
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = colors,
                         center = Offset(size.width / 2f, centerY),
-                        radius = r
+                        radius = size.height * 0.655f
                     ),
-                    radius = r,
+                    radius = size.height * 0.655f,
                     center = Offset(size.width / 2f, centerY)
                 )
             }
