@@ -83,6 +83,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
 
+    // Splash Screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
+
     // Compose BOM
     val composeBom = platform("androidx.compose:compose-bom:2024.01.00")
     implementation(composeBom)
