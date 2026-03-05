@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bepresent.android.data.analytics.AnalyticsEvents
 import com.bepresent.android.data.analytics.AnalyticsManager
+import com.bepresent.android.data.convex.ConvexManager
 import com.bepresent.android.data.datastore.PreferencesManager
 import com.bepresent.android.data.subscription.SubscriptionManager
 import com.bepresent.android.ui.onboarding.v2.animation.OnboardingAnimSpecs
@@ -30,7 +31,8 @@ import kotlin.coroutines.resume
 class OnboardingViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
     private val subscriptionManager: SubscriptionManager,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val convexManager: ConvexManager
 ) : ViewModel() {
 
     val screens: List<OnboardingScreenType> = buildOnboardingScreens()
@@ -59,6 +61,12 @@ class OnboardingViewModel @Inject constructor(
 
     private val _isComplete = MutableStateFlow(false)
     val isComplete: StateFlow<Boolean> = _isComplete.asStateFlow()
+
+    private val _isUsernameLoading = MutableStateFlow(false)
+    val isUsernameLoading: StateFlow<Boolean> = _isUsernameLoading.asStateFlow()
+
+    private val _usernameError = MutableStateFlow<String?>(null)
+    val usernameError: StateFlow<String?> = _usernameError.asStateFlow()
 
     /** Frame clock backed by Android Choreographer so Animatable works in viewModelScope. */
     private val frameClock = object : MonotonicFrameClock {
@@ -256,10 +264,26 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun saveUsername() {
-        analyticsManager.track(AnalyticsEvents.ENTERED_USERNAME)
         viewModelScope.launch {
-            preferencesManager.setOnboardingV2Username(_username.value)
+            _isUsernameLoading.value = true
+            try {
+                convexManager.client?.mutation<Unit>(
+                    "users:updateUsername",
+                    args = mapOf("username" to _username.value)
+                )
+                preferencesManager.setOnboardingV2Username(_username.value)
+                analyticsManager.track(AnalyticsEvents.ENTERED_USERNAME)
+                _isUsernameLoading.value = false
+                advance()
+            } catch (e: Exception) {
+                _isUsernameLoading.value = false
+                _usernameError.value = e.message ?: "Failed to save username"
+            }
         }
+    }
+
+    fun dismissUsernameError() {
+        _usernameError.value = null
     }
 
     // ── Notification Permission Tracking ──
