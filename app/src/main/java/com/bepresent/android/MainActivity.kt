@@ -133,7 +133,8 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
 
     // Determine if we should show bottom nav (hide on detail screens)
     val bottomTabs = BottomTab.entries
-    val showBottomBar = bottomTabs.any { it.route == currentRoute }
+    val showBottomBar = currentRoute == null && bottomTabs.any { it.route == resolvedStart }
+        || bottomTabs.any { it.route == currentRoute }
 
     Scaffold(
         bottomBar = {
