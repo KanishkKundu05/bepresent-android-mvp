@@ -66,6 +66,27 @@ class SocialViewModel @Inject constructor(
         }
     }
 
+    fun addPartnerByEmail(contactName: String, email: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isAdding = true, addError = null)
+            try {
+                convexManager.client?.mutation<String>(
+                    "accountabilityPartners:add",
+                    args = mapOf(
+                        "contactName" to contactName,
+                        "email" to email
+                    )
+                )
+                _uiState.value = _uiState.value.copy(isAdding = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isAdding = false,
+                    addError = e.message ?: "Failed to add partner"
+                )
+            }
+        }
+    }
+
     fun addPartner(contactName: String, phoneNumber: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isAdding = true, addError = null)

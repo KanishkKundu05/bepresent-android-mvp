@@ -32,15 +32,22 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,6 +68,7 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val context = LocalContext.current
+    var showEmailDialog by remember { mutableStateOf(false) }
 
     // Contact picker launcher
     val contactPickerLauncher = rememberLauncherForActivityResult(
@@ -186,6 +194,14 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("Add from Contacts")
                             }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Add from Email",
+                                fontSize = 14.sp,
+                                color = HomeV2Tokens.BrandPrimary,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.clickable { showEmailDialog = true }
+                            )
                         }
                     }
                 } else {
@@ -206,6 +222,17 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
                     }
                 }
             }
+        }
+
+        // Email dialog
+        if (showEmailDialog) {
+            AddFromEmailDialog(
+                onDismiss = { showEmailDialog = false },
+                onAdd = { name, email ->
+                    viewModel.addPartnerByEmail(name, email)
+                    showEmailDialog = false
+                }
+            )
         }
 
         // Error display
@@ -287,6 +314,51 @@ private fun AccountabilityPartnerRow(
             }
         }
     }
+}
+
+@Composable
+private fun AddFromEmailDialog(
+    onDismiss: () -> Unit,
+    onAdd: (name: String, email: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add from Email") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onAdd(name.trim(), email.trim()) },
+                enabled = name.isNotBlank() && email.contains("@")
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 /**
