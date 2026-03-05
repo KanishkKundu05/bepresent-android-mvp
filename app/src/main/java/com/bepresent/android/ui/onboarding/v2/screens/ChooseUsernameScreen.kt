@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -34,14 +36,31 @@ import com.bepresent.android.ui.onboarding.v2.components.OnboardingButtonAppeara
 @Composable
 fun ChooseUsernameScreen(
     username: String,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
     onUsernameChanged: (String) -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    onDismissError: () -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     val isValid = username.length >= 3 && username.matches(Regex("^[a-zA-Z0-9_]+$"))
+
+    // Server error alert dialog
+    if (errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            title = { Text("Error") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                TextButton(onClick = onDismissError) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -62,8 +81,8 @@ fun ChooseUsernameScreen(
         TextField(
             value = username,
             onValueChange = { newValue ->
-                onUsernameChanged(newValue.lowercase().take(20))
-                errorMessage = when {
+                onUsernameChanged(newValue.lowercase().take(15))
+                validationError = when {
                     newValue.length < 3 -> "Username must be at least 3 characters"
                     !newValue.matches(Regex("^[a-zA-Z0-9_]*$")) -> "Only letters, numbers, and underscores"
                     else -> null
@@ -91,7 +110,7 @@ fun ChooseUsernameScreen(
             keyboardActions = KeyboardActions(
                 onDone = {
                     keyboardController?.hide()
-                    if (isValid) onConfirm()
+                    if (isValid && !isLoading) onConfirm()
                 }
             ),
             modifier = Modifier
@@ -101,10 +120,10 @@ fun ChooseUsernameScreen(
 
         Divider(color = OnboardingTokens.Neutral800, thickness = 1.dp)
 
-        if (errorMessage != null && username.isNotEmpty()) {
+        if (validationError != null && username.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = errorMessage!!,
+                text = validationError!!,
                 style = OnboardingTypography.caption,
                 color = OnboardingTokens.RedPrimary,
                 textAlign = TextAlign.Center
@@ -116,7 +135,8 @@ fun ChooseUsernameScreen(
         OnboardingContinueButton(
             title = "Continue",
             appearance = OnboardingButtonAppearance.Secondary,
-            enabled = isValid,
+            enabled = isValid && !isLoading,
+            isLoading = isLoading,
             onClick = {
                 keyboardController?.hide()
                 onConfirm()
