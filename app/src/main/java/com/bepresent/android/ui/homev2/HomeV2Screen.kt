@@ -30,6 +30,7 @@ import com.bepresent.android.ui.homev2.components.SessionCountdownCard
 import com.bepresent.android.ui.homev2.components.SessionGoalSheet
 import com.bepresent.android.ui.homev2.components.SessionModeSheet
 import com.bepresent.android.ui.intention.IntentionConfigSheet
+import com.bepresent.android.ui.permissions.PermissionGateSheet
 import com.bepresent.android.ui.profile.ProfileSheet
 
 @Composable
@@ -47,6 +48,8 @@ fun HomeV2Screen(
     var showGoalSheet by remember { mutableStateOf(false) }
     var showIntentionConfig by remember { mutableStateOf(false) }
     var editingIntention by remember { mutableStateOf<AppIntention?>(null) }
+    var showPermissionGate by remember { mutableStateOf(false) }
+    var pendingActionAfterPermissions by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
@@ -94,7 +97,14 @@ fun HomeV2Screen(
                                 state = uiState.blockedTimeState,
                                 onSessionModeClick = { showModeSheet = true },
                                 onSessionGoalClick = { showGoalSheet = true },
-                                onBlockNowClick = { viewModel.startCountdown() }
+                                onBlockNowClick = {
+                                    if (uiState.permissionsOk) {
+                                        viewModel.startCountdown()
+                                    } else {
+                                        pendingActionAfterPermissions = { viewModel.startCountdown() }
+                                        showPermissionGate = true
+                                    }
+                                }
                             )
                         }
                         HomeScreenState.Countdown -> {
@@ -184,6 +194,24 @@ fun HomeV2Screen(
                     timePerOpenMinutes = time
                 )
                 showIntentionConfig = false
+                if (!uiState.permissionsOk) {
+                    showPermissionGate = true
+                }
+            }
+        )
+    }
+
+    // Permission gate (overlay + accessibility)
+    if (showPermissionGate) {
+        PermissionGateSheet(
+            onDismiss = {
+                showPermissionGate = false
+                pendingActionAfterPermissions = null
+            },
+            onAllGranted = {
+                showPermissionGate = false
+                pendingActionAfterPermissions?.invoke()
+                pendingActionAfterPermissions = null
             }
         )
     }

@@ -34,6 +34,7 @@ import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
 import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
 import com.bepresent.android.ui.onboarding.v2.components.OnboardingContinueButton
 import com.bepresent.android.ui.onboarding.v2.components.OnboardingButtonAppearance
+import com.bepresent.android.ui.permissions.PermissionGateSheet
 
 @Composable
 fun SuggestedIntentionScreen(
@@ -45,6 +46,7 @@ fun SuggestedIntentionScreen(
     val context = LocalContext.current
 
     var showConfigSheet by remember { mutableStateOf(false) }
+    var showPermissionGate by remember { mutableStateOf(false) }
 
     val app = insight
 
@@ -216,6 +218,21 @@ fun SuggestedIntentionScreen(
             onSave = { packageName, appName, allowedOpens, timePerOpen ->
                 viewModel.createIntention(packageName, appName, allowedOpens, timePerOpen)
                 showConfigSheet = false
+                // Prompt for overlay + accessibility permissions
+                showPermissionGate = true
+            }
+        )
+    }
+
+    // Permission gate — overlay + accessibility after setting intention
+    if (showPermissionGate) {
+        PermissionGateSheet(
+            onDismiss = {
+                showPermissionGate = false
+                onComplete()
+            },
+            onAllGranted = {
+                showPermissionGate = false
                 onComplete()
             }
         )
