@@ -21,7 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,15 +40,14 @@ fun SuggestedIntentionScreen(
     onComplete: () -> Unit,
     viewModel: SuggestedIntentionViewModel = hiltViewModel()
 ) {
-    val topApp by viewModel.topApp.collectAsState()
+    val insight by viewModel.insight.collectAsState()
     val isLoaded by viewModel.isLoaded.collectAsState()
     val context = LocalContext.current
 
     var showConfigSheet by remember { mutableStateOf(false) }
 
-    val app = topApp
+    val app = insight
 
-    // Resolve app label and icon from PackageManager when we have a suggested app
     val appLabel = remember(app?.packageName) {
         val pkg = app?.packageName ?: return@remember null
         try {
@@ -62,15 +64,6 @@ fun SuggestedIntentionScreen(
                 .toBitmap(80, 80).asImageBitmap()
         } catch (_: Exception) {
             null
-        }
-    }
-
-    val timeText = app?.let {
-        val weeklyHours = it.totalTimeMs / (1000 * 60 * 60)
-        val weeklyMinutes = (it.totalTimeMs / (1000 * 60)) % 60
-        when {
-            weeklyHours > 0 -> "${weeklyHours}h ${weeklyMinutes}m"
-            else -> "${weeklyMinutes}m"
         }
     }
 
@@ -95,13 +88,58 @@ fun SuggestedIntentionScreen(
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // "You spent Xh on Instagram this week"
-                Text(
-                    text = "You spent $timeText on $appLabel\nthis week",
-                    style = OnboardingTypography.h2,
-                    color = OnboardingTokens.NeutralBlack,
-                    textAlign = TextAlign.Center
-                )
+                // Dynamic headline based on available data
+                if (app.openCountYesterday > 0) {
+                    // We have open count data — show it prominently
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(SpanStyle(color = OnboardingTokens.NeutralBlack)) {
+                                append("You opened $appLabel ")
+                            }
+                            withStyle(SpanStyle(color = OnboardingTokens.BrandPrimary)) {
+                                append("${app.openCountYesterday} times")
+                            }
+                            withStyle(SpanStyle(color = OnboardingTokens.NeutralBlack)) {
+                                append(" yesterday")
+                            }
+                        },
+                        style = OnboardingTypography.h2,
+                        textAlign = TextAlign.Center
+                    )
+
+                    // Also show screen time if significant
+                    if (app.screenTimeMinutesYesterday >= 30) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val hours = app.screenTimeMinutesYesterday / 60
+                        val mins = app.screenTimeMinutesYesterday % 60
+                        val timeStr = when {
+                            hours > 0 && mins > 0 -> "${hours}h ${mins}m"
+                            hours > 0 -> "${hours}h"
+                            else -> "${mins}m"
+                        }
+                        Text(
+                            text = "That's $timeStr of screen time",
+                            style = OnboardingTypography.p3,
+                            color = OnboardingTokens.Neutral800,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    // Fallback: weekly screen time (no open count available)
+                    val hours = app.screenTimeMinutesYesterday / 60
+                    val mins = app.screenTimeMinutesYesterday % 60
+                    val timeStr = when {
+                        hours > 0 && mins > 0 -> "${hours}h ${mins}m"
+                        hours > 0 -> "${hours}h"
+                        else -> "${mins}m"
+                    }
+                    Text(
+                        text = "You spent $timeStr on $appLabel\nthis week",
+                        style = OnboardingTypography.h2,
+                        color = OnboardingTokens.NeutralBlack,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -162,7 +200,7 @@ fun SuggestedIntentionScreen(
         }
     }
 
-    // Intention config sheet — pre-filled with the suggested app if available
+    // Intention config sheet — pre-filled with smart defaults from usage data
     if (showConfigSheet) {
         IntentionConfigSheet(
             existingIntention = app?.let {
@@ -170,8 +208,8 @@ fun SuggestedIntentionScreen(
                     id = "",
                     packageName = it.packageName,
                     appName = appLabel ?: it.packageName,
-                    allowedOpensPerDay = 10,
-                    timePerOpenMinutes = 5
+                    allowedOpensPerDay = it.suggestedOpens,
+                    timePerOpenMinutes = it.suggestedMinutesPerOpen
                 )
             },
             onDismiss = { showConfigSheet = false },
