@@ -1,5 +1,6 @@
 package com.bepresent.android.ui.onboarding.v2.screens
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,27 +10,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.bepresent.android.R
 import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
 import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
 import com.bepresent.android.ui.onboarding.v2.components.SurveyListItem
+import kotlinx.coroutines.delay
 
-private val ACQUISITION_OPTIONS = listOf(
-    "Recommended by a Friend" to "\uD83D\uDC64",
-    "Facebook" to "\uD83D\uDFE6",
-    "TikTok" to "\uD83C\uDFB5",
-    "Instagram" to "\uD83D\uDCF7",
-    "Reddit" to "\uD83E\uDD16",
-    "App Store" to "\uD83D\uDED2",
-    "Other" to null
-)
+private data class AcquisitionOption(val title: String, @DrawableRes val iconRes: Int?)
 
 @Composable
 fun AcquisitionScreen(
@@ -37,6 +34,35 @@ fun AcquisitionScreen(
 ) {
     var selectedOption by remember { mutableStateOf<String?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
+
+    val options = remember {
+        val base = listOf(
+            AcquisitionOption("TikTok", R.drawable.tiktok_favi),
+            AcquisitionOption("Instagram", R.drawable.insta_favi),
+            AcquisitionOption("Facebook", R.drawable.facebook_favi),
+            AcquisitionOption("Reddit", R.drawable.reddit_favi),
+            AcquisitionOption("Recommended by a Friend", R.drawable.user_favi),
+            AcquisitionOption("Google Play", R.drawable.google_play_favi),
+        ).shuffled()
+        base + AcquisitionOption("Other", null)
+    }
+
+    // 300ms delay before advancing
+    LaunchedEffect(selectedOption) {
+        if (selectedOption != null && isProcessing) {
+            delay(300)
+            onSelect(selectedOption!!)
+        }
+    }
+
+    // 2s cleanup: reset state if user comes back
+    LaunchedEffect(isProcessing) {
+        if (isProcessing) {
+            delay(2000)
+            selectedOption = null
+            isProcessing = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -60,16 +86,21 @@ fun AcquisitionScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
         ) {
-            ACQUISITION_OPTIONS.forEach { (title, emoji) ->
+            options.forEach { option ->
+                val itemAlpha = when {
+                    !isProcessing -> 1f
+                    selectedOption == option.title -> 1f
+                    else -> 0.5f
+                }
                 SurveyListItem(
-                    title = title,
-                    emoji = emoji,
-                    isSelected = selectedOption == title,
+                    title = option.title,
+                    iconRes = option.iconRes,
+                    isSelected = selectedOption == option.title,
                     enabled = !isProcessing,
+                    modifier = Modifier.alpha(itemAlpha),
                     onClick = {
-                        selectedOption = title
+                        selectedOption = option.title
                         isProcessing = true
-                        onSelect(title)
                     }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
