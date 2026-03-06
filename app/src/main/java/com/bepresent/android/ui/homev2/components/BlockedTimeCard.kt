@@ -122,6 +122,7 @@ fun BlockedTimeCard(
             title = "Block Now",
             icon = Icons.Default.PlayArrow,
             appearance = FullButtonAppearance.Primary,
+            fontSize = 20.sp,
             onClick = onBlockNowClick
         )
     }

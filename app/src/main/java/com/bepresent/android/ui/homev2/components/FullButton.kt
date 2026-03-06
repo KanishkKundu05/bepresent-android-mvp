@@ -38,6 +38,7 @@ fun FullButton(
     icon: ImageVector? = null,
     appearance: FullButtonAppearance = FullButtonAppearance.Primary,
     enabled: Boolean = true,
+    fontSize: androidx.compose.ui.unit.TextUnit = 16.sp,
     onClick: () -> Unit
 ) {
     val backgroundColor = when (appearance) {
@@ -107,7 +108,7 @@ fun FullButton(
                 Text(
                     text = title,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
+                    fontSize = fontSize
                 )
             }
         }
