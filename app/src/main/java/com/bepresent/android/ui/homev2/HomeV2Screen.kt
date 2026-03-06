@@ -1,11 +1,20 @@
 package com.bepresent.android.ui.homev2
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -53,6 +62,7 @@ fun HomeV2Screen(
     var editingIntention by remember { mutableStateOf<AppIntention?>(null) }
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val isIdle = uiState.screenState == HomeScreenState.Idle
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         // Background gradient
@@ -80,8 +90,18 @@ fun HomeV2Screen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Date carousel (only in idle state)
-                if (uiState.screenState == HomeScreenState.Idle) {
+                // Date carousel — slides up/out when leaving idle
+                AnimatedVisibility(
+                    visible = isIdle,
+                    enter = slideInVertically(
+                        initialOffsetY = { -it },
+                        animationSpec = tween(350)
+                    ) + fadeIn(animationSpec = tween(350)),
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = tween(350)
+                    ) + fadeOut(animationSpec = tween(350))
+                ) {
                     HomeDateCarousel(
                         days = uiState.days,
                         modifier = Modifier
@@ -90,52 +110,82 @@ fun HomeV2Screen(
                     )
                 }
 
-                // Main card — state-switched
-                CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    when (uiState.screenState) {
-                        HomeScreenState.Idle -> {
-                            BlockedTimeCard(
-                                state = uiState.blockedTimeState,
-                                onSessionModeClick = { showModeSheet = true },
-                                onSessionGoalClick = { showGoalSheet = true },
-                                onBlockNowClick = { viewModel.startCountdown() }
-                            )
-                        }
-                        HomeScreenState.Countdown -> {
-                            SessionCountdownCard(
-                                count = uiState.countdownValue,
-                                onCancel = { viewModel.cancelCountdown() }
-                            )
-                        }
-                        HomeScreenState.ActiveSession -> {
-                            ActiveSessionCard(
-                                state = uiState.activeSessionState,
-                                onTakeBreak = { /* TODO: break flow */ },
-                                onEndBreak = { /* TODO: end break */ },
-                                onGiveUp = { viewModel.giveUpSession() },
-                                onBeastModeInfo = { /* TODO: beast mode info */ }
-                            )
+                // Main card — state-switched with cross-fade
+                CardV2(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .then(
+                            if (!isIdle) Modifier.fillMaxHeight() else Modifier
+                        )
+                ) {
+                    AnimatedContent(
+                        targetState = uiState.screenState,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(300)) togetherWith
+                                fadeOut(animationSpec = tween(300))
+                        },
+                        label = "cardContent"
+                    ) { screenState ->
+                        when (screenState) {
+                            HomeScreenState.Idle -> {
+                                BlockedTimeCard(
+                                    state = uiState.blockedTimeState,
+                                    onSessionModeClick = { showModeSheet = true },
+                                    onSessionGoalClick = { showGoalSheet = true },
+                                    onBlockNowClick = { viewModel.startCountdown() }
+                                )
+                            }
+                            HomeScreenState.Countdown -> {
+                                SessionCountdownCard(
+                                    count = uiState.countdownValue,
+                                    onCancel = { viewModel.cancelCountdown() }
+                                )
+                            }
+                            HomeScreenState.ActiveSession -> {
+                                ActiveSessionCard(
+                                    state = uiState.activeSessionState,
+                                    onTakeBreak = { /* TODO: break flow */ },
+                                    onEndBreak = { /* TODO: end break */ },
+                                    onGiveUp = { viewModel.giveUpSession() },
+                                    onBeastModeInfo = { /* TODO: beast mode info */ }
+                                )
+                            }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                // Only show intentions + bottom padding in idle
+                AnimatedVisibility(
+                    visible = isIdle,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(350)
+                    ) + fadeIn(animationSpec = tween(350)),
+                    exit = slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(350)
+                    ) + fadeOut(animationSpec = tween(350))
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                // Intentions card
-                CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    IntentionsCard(
-                        intentions = uiState.intentions,
-                        onReload = { /* TODO: reload intentions */ },
-                        onAdd = {
-                            showIntentionConfig = true
-                        },
-                        onIntentionClick = { intention ->
-                            editingIntention = intention
+                        // Intentions card
+                        CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            IntentionsCard(
+                                intentions = uiState.intentions,
+                                onReload = { /* TODO: reload intentions */ },
+                                onAdd = {
+                                    showIntentionConfig = true
+                                },
+                                onIntentionClick = { intention ->
+                                    editingIntention = intention
+                                }
+                            )
                         }
-                    )
-                }
 
-                Spacer(modifier = Modifier.height(100.dp)) // Bottom padding for tab bar
+                        Spacer(modifier = Modifier.height(100.dp)) // Bottom padding for tab bar
+                    }
+                }
             }
         }
     }
