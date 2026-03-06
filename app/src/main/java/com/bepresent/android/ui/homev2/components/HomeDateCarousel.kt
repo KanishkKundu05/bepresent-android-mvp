@@ -1,6 +1,7 @@
 package com.bepresent.android.ui.homev2.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,8 +43,9 @@ data class DayUiModel(
 )
 
 // Arc transform arrays matching iOS exactly
-private val arcYOffset = listOf(44, 18, 2, 0, 2, 18, 44)
-private val arcRotation = listOf(-20f, -14f, -7f, 0f, 7f, 14f, 20f)
+private val arcYOffset = listOf(15, -10, -25, -25, -25, -10, 15)
+private val arcRotation = listOf(-18f, -15f, -10f, 0f, 10f, 15f, 18f)
+private val arcHPadding = listOf(6, 5, 2, 2, 2, 5, 6)
 
 @Composable
 fun HomeDateCarousel(
@@ -50,18 +54,20 @@ fun HomeDateCarousel(
 ) {
     Box(
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(vertical = 30.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
             modifier = Modifier.requiredWidth(520.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Bottom
         ) {
             days.forEachIndexed { index, day ->
                 CalendarDayCell(
                     day = day,
                     modifier = Modifier
+                        .padding(horizontal = arcHPadding.getOrElse(index) { 0 }.dp)
                         .offset(y = arcYOffset.getOrElse(index) { 0 }.dp)
                         .rotate(arcRotation.getOrElse(index) { 0f })
                 )
@@ -70,41 +76,51 @@ fun HomeDateCarousel(
     }
 }
 
+// iOS theme color references
+private val Neutral800 = Color(0xFF777777)
+
 @Composable
 private fun CalendarDayCell(
     day: DayUiModel,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = when {
-        day.isCurrentDay -> HomeV2Tokens.NeutralWhite
-        day.isEnabled -> HomeV2Tokens.NeutralWhite.copy(alpha = 0.25f)
-        else -> HomeV2Tokens.NeutralWhite.copy(alpha = 0.15f)
-    }
+    val checkSize = if (day.isCurrentDay) 48.dp else 40.dp
 
+    // Text color: current day = brandPrimary (blue), others = white
     val textColor = when {
-        day.isCurrentDay -> HomeV2Tokens.NeutralBlack
+        day.isCurrentDay -> HomeV2Tokens.BrandPrimary
         day.isEnabled -> HomeV2Tokens.NeutralWhite
         else -> HomeV2Tokens.NeutralWhite.copy(alpha = 0.5f)
     }
 
+    // Cell background matching iOS
+    val cellModifier = modifier.clip(CircleShape)
+    val bgModifier = when {
+        day.isCurrentDay -> cellModifier.background(HomeV2Tokens.NeutralWhite)
+        day.isEnabled -> cellModifier.background(HomeV2Tokens.NeutralWhite.copy(alpha = 0.20f))
+        else -> cellModifier
+            .background(HomeV2Tokens.NeutralWhite.copy(alpha = 0.15f))
+            .border(1.5.dp, HomeV2Tokens.NeutralWhite.copy(alpha = 0.15f), CircleShape)
+    }
+
     Column(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(bgColor)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier = bgModifier
+            .padding(top = 10.dp)
+            .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Weekday label — iOS uses font.tiny (9sp) bold, 0.6 opacity
         Text(
             text = day.weekDay,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = textColor.copy(alpha = 0.7f),
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(3.dp))
+        // Day number — iOS uses font.caption (12sp) bold
         Text(
             text = day.number,
-            fontSize = 16.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = textColor,
             textAlign = TextAlign.Center
@@ -113,15 +129,15 @@ private fun CalendarDayCell(
 
         // Status indicator
         Box(
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(checkSize),
             contentAlignment = Alignment.Center
         ) {
             when {
-                // Past day failed (screentime below goal) → red cross
+                // Past day failed → red cross
                 day.isFailed && day.isEnabled -> {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(checkSize)
                             .clip(CircleShape)
                             .background(HomeV2Tokens.DangerPrimary),
                         contentAlignment = Alignment.Center
@@ -134,51 +150,55 @@ private fun CalendarDayCell(
                         )
                     }
                 }
-                // Past day completed → green check
+                // Past day completed → green check with shadow & gradient
                 day.isChecked && day.isEnabled -> {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(checkSize)
+                            .shadow(6.dp, CircleShape, ambientColor = HomeV2Tokens.GreenPrimary.copy(alpha = 0.4f), spotColor = HomeV2Tokens.GreenPrimary.copy(alpha = 0.3f))
                             .clip(CircleShape)
-                            .background(HomeV2Tokens.GreenPrimary),
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        HomeV2Tokens.GreenPrimary,
+                                        HomeV2Tokens.GreenPrimary.copy(alpha = 0.8f)
+                                    )
+                                )
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Completed",
-                            modifier = Modifier.size(22.dp),
+                            modifier = Modifier.size(24.dp),
                             tint = Color.White
                         )
                     }
                 }
-                // Future dates → greyed out tick
+                // Future / disabled → stroked circle only (no fill, no checkmark)
                 !day.isEnabled -> {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(checkSize)
+                            .border(1.5.dp, HomeV2Tokens.NeutralWhite.copy(alpha = 0.15f), CircleShape)
+                    )
+                }
+                // Current day or enabled not checked → grey checkmark
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .size(checkSize)
                             .clip(CircleShape)
-                            .background(HomeV2Tokens.NeutralWhite.copy(alpha = 0.15f)),
+                            .background(HomeV2Tokens.Neutral200),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = "Future",
-                            modifier = Modifier.size(22.dp),
-                            tint = HomeV2Tokens.NeutralWhite.copy(alpha = 0.35f)
+                            contentDescription = "Not completed",
+                            modifier = Modifier.size(24.dp),
+                            tint = Neutral800.copy(alpha = 0.5f)
                         )
                     }
-                }
-                // Current day / enabled but not checked → empty circle
-                else -> {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (day.isCurrentDay) HomeV2Tokens.Neutral200
-                                else HomeV2Tokens.NeutralWhite.copy(alpha = 0.3f)
-                            )
-                    )
                 }
             }
         }

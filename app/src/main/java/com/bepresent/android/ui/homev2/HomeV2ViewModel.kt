@@ -290,13 +290,14 @@ class HomeV2ViewModel @Inject constructor(
 
     private fun generateDays(): List<DayUiModel> {
         val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
-        val dateFormat = SimpleDateFormat("d", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("dd", Locale.getDefault())
 
         return (-3..3).map { offset ->
             val c = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, offset) }
             val date = c.time
+            val weekDay = dayFormat.format(date).replaceFirstChar { it.uppercase() }.take(3)
             DayUiModel(
-                weekDay = dayFormat.format(date).uppercase().take(3),
+                weekDay = weekDay,
                 number = dateFormat.format(date),
                 isEnabled = offset <= 0,
                 isChecked = offset < 0, // past days shown as checked (placeholder)
