@@ -69,9 +69,10 @@ fun HomeV2Screen(
     val isIdle = uiState.screenState == HomeScreenState.Idle
 
     // Animated progress: 1 = idle layout, 0 = active/countdown layout
+    // iOS uses easeInOut(0.35s) for scroll + easeInOut(0.3s) for content
     val idleProgress by animateFloatAsState(
         targetValue = if (isIdle) 1f else 0f,
-        animationSpec = tween(400),
+        animationSpec = tween(350),
         label = "idleProgress"
     )
     // Only apply scroll when fully idle; use weight on card when animating or active
