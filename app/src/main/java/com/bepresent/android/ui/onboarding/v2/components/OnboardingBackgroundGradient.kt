@@ -42,7 +42,7 @@ fun OnboardingBackgroundGradient(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(bottomColor, topColor)
+                    colors = listOf(topColor, bottomColor)
                 )
             )
     )

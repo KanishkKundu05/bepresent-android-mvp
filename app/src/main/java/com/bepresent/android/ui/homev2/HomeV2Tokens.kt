@@ -123,9 +123,9 @@ fun BackgroundV2(
             .fillMaxSize()
             .drawBehind {
                 val colors = listOf(
-                    Color(0xFFABDDFF),  // blue3 — lightest center
+                    Color(0xFF003BFF),  // blue1 — darkest center (top)
                     Color(0xFF55B7FF),  // blue2 — mid
-                    Color(0xFF003BFF)   // blue1 — darkest edge
+                    Color(0xFFABDDFF)   // blue3 — lightest edge (bottom)
                 )
                 val centerY = -size.height * 0.15f
                 drawCircle(
