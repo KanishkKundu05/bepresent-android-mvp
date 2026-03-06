@@ -11,12 +11,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Leaderboard
-import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.annotation.DrawableRes
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -36,7 +31,7 @@ import kotlinx.coroutines.flow.first
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.animation.EnterTransition
@@ -73,14 +68,14 @@ import javax.inject.Inject
 enum class BottomTab(
     val route: String,
     val label: String,
-    val icon: ImageVector,
+    @DrawableRes val iconRes: Int,
     val analyticsEvent: String
 ) {
-    Home("home", "Home", Icons.Default.Home, AnalyticsEvents.CLICKED_HOME),
-    Schedules("schedules", "Schedules", Icons.Default.CalendarMonth, AnalyticsEvents.CLICKED_SCHEDULES),
-    LeaderboardTab("leaderboard", "Leaderboard", Icons.Default.Leaderboard, AnalyticsEvents.CLICKED_LEADERBOARD),
-    ScreenTime("screentime", "Screen Time", Icons.Default.PhoneAndroid, AnalyticsEvents.CLICKED_SCREEN_TIME),
-    Social("social", "Social", Icons.Default.Groups, AnalyticsEvents.CLICKED_SOCIAL)
+    Home("home", "Home", R.drawable.ic_tab_home, AnalyticsEvents.CLICKED_HOME),
+    Schedules("schedules", "Schedules", R.drawable.ic_tab_schedules, AnalyticsEvents.CLICKED_SCHEDULES),
+    LeaderboardTab("leaderboard", "Leaderboard", R.drawable.ic_tab_leaderboard, AnalyticsEvents.CLICKED_LEADERBOARD),
+    ScreenTime("screentime", "Screen Time", R.drawable.ic_tab_screen_time, AnalyticsEvents.CLICKED_SCREEN_TIME),
+    Social("social", "Social", R.drawable.ic_tab_social, AnalyticsEvents.CLICKED_SOCIAL)
 }
 
 @AndroidEntryPoint
@@ -152,7 +147,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
                         NavigationBarItem(
                             icon = {
                                 Icon(
-                                    imageVector = tab.icon,
+                                    painter = painterResource(id = tab.iconRes),
                                     contentDescription = tab.label
                                 )
                             },
