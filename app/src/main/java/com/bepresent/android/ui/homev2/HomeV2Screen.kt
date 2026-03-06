@@ -69,7 +69,7 @@ fun HomeV2Screen(
                 onProfileClick = { showProfileSheet = true },
                 onStreakClick = { showStreakSheet = true },
                 onDevClick = onDevClick,
-                modifier = Modifier.padding(top = statusBarTop + 4.dp, bottom = 4.dp)
+                modifier = Modifier.padding(top = statusBarTop + 2.dp, bottom = 4.dp)
             )
 
             // Scrollable body

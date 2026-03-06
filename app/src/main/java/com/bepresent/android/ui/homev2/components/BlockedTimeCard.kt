@@ -59,7 +59,7 @@ fun BlockedTimeCard(
         // Title
         Text(
             text = "Time Blocked today",
-            fontSize = 16.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold,
             color = HomeV2Tokens.NeutralBlack
         )
@@ -104,14 +104,14 @@ fun BlockedTimeCard(
                 icon = Icons.Default.Shield,
                 label = state.sessionModeLabel,
                 onClick = onSessionModeClick,
-                modifier = Modifier.weight(1.4f)
+                modifier = Modifier.weight(1.68f)
             )
             // Session duration capsule
             CapsuleEntry(
                 icon = Icons.Default.Timer,
                 label = state.sessionDurationLabel,
                 onClick = onSessionGoalClick,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(0.72f)
             )
         }
 
