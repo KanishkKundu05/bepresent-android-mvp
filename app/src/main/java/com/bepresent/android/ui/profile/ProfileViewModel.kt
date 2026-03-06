@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bepresent.android.data.convex.AuthState
 import com.bepresent.android.data.convex.ConvexManager
+import com.bepresent.android.data.datastore.PreferencesManager
 import com.bepresent.android.data.db.SyncQueueDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,7 @@ data class PartnerInfo(
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val convexManager: ConvexManager,
+    private val preferencesManager: PreferencesManager,
     syncQueueDao: SyncQueueDao
 ) : ViewModel() {
 
@@ -42,6 +44,15 @@ class ProfileViewModel @Inject constructor(
 
     val pendingSyncCount: StateFlow<Int> = syncQueueDao.observePendingCount()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val intentionCountdownEnabled: StateFlow<Boolean> = preferencesManager.intentionCountdownEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setIntentionCountdownEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesManager.setIntentionCountdownEnabled(enabled)
+        }
+    }
 
     init {
         loadProfile()

@@ -245,6 +245,7 @@ private fun IntentionShield(
     val scope = rememberCoroutineScope()
     var intention by remember { mutableStateOf<AppIntention?>(null) }
     val freezeAvailable by preferencesManager.streakFreezeAvailable.collectAsState(initial = false)
+    val countdownEnabled by preferencesManager.intentionCountdownEnabled.collectAsState(initial = false)
     var countdownSeconds by remember { mutableIntStateOf(COUNTDOWN_SECONDS) }
 
     LaunchedEffect(blockedPackage) {
@@ -255,11 +256,15 @@ private fun IntentionShield(
         )
     }
 
-    // Countdown timer
-    LaunchedEffect(Unit) {
-        while (countdownSeconds > 0) {
-            delay(1000L)
-            countdownSeconds--
+    // Countdown timer (only when enabled in settings)
+    LaunchedEffect(countdownEnabled) {
+        if (countdownEnabled) {
+            while (countdownSeconds > 0) {
+                delay(1000L)
+                countdownSeconds--
+            }
+        } else {
+            countdownSeconds = 0
         }
     }
 

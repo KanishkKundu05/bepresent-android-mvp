@@ -43,6 +43,7 @@ class PreferencesManager @Inject constructor(
         val SUBSCRIPTION_EXPIRY = stringPreferencesKey("subscription_expiry")
         val STRIPE_CUSTOMER_ID = stringPreferencesKey("stripe_customer_id")
         val DEVICE_UUID = stringPreferencesKey("device_uuid")
+        val INTENTION_COUNTDOWN_ENABLED = booleanPreferencesKey("intention_countdown_enabled")
     }
 
     // Flows
@@ -52,6 +53,7 @@ class PreferencesManager @Inject constructor(
     val streakFreezeAvailable: Flow<Boolean> = dataStore.data.map { it[Keys.STREAK_FREEZE_AVAILABLE] ?: true }
     val lastFreezeGrantDate: Flow<String> = dataStore.data.map { it[Keys.LAST_FREEZE_GRANT_DATE] ?: "" }
     val activeSessionId: Flow<String?> = dataStore.data.map { it[Keys.ACTIVE_SESSION_ID] }
+    val intentionCountdownEnabled: Flow<Boolean> = dataStore.data.map { it[Keys.INTENTION_COUNTDOWN_ENABLED] ?: false }
 
     // Setters
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -145,6 +147,10 @@ class PreferencesManager @Inject constructor(
 
     suspend fun getStripeCustomerIdOnce(): String? {
         return dataStore.data.first()[Keys.STRIPE_CUSTOMER_ID]
+    }
+
+    suspend fun setIntentionCountdownEnabled(enabled: Boolean) {
+        dataStore.edit { it[Keys.INTENTION_COUNTDOWN_ENABLED] = enabled }
     }
 
     suspend fun getOrCreateDeviceUuid(): String {

@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -53,6 +54,7 @@ fun ProfileScreen(
     val profile by viewModel.profile.collectAsState()
     val partners by viewModel.partners.collectAsState()
     val pendingSyncCount by viewModel.pendingSyncCount.collectAsState()
+    val intentionCountdownEnabled by viewModel.intentionCountdownEnabled.collectAsState()
     val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
@@ -75,6 +77,33 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Settings
+            Text("Settings", style = MaterialTheme.typography.titleMedium)
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Intention Countdown",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            "Show a countdown before you can open a blocked app",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = intentionCountdownEnabled,
+                        onCheckedChange = { viewModel.setIntentionCountdownEnabled(it) }
+                    )
+                }
+            }
+
             when (authState) {
                 is AuthState.Unauthenticated -> {
                     Card(
