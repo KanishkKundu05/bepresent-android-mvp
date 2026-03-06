@@ -83,10 +83,9 @@ fun HomeV2Screen(
                     HomeDateCarousel(
                         days = uiState.days,
                         modifier = Modifier
-                            .padding(top = 8.dp, bottom = 8.dp)
+                            .padding(top = 4.dp)
                             .zIndex(1f)
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
                 }
 
                 // Main card — state-switched

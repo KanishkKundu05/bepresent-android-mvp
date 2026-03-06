@@ -55,7 +55,7 @@ fun HomeDateCarousel(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 30.dp),
+            .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(

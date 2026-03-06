@@ -163,7 +163,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
                 // Home tab — new HomeV2
                 composable(BottomTab.Home.route) {
                     val viewModel: HomeV2ViewModel = hiltViewModel()
-                    Box(modifier = Modifier.padding(innerPadding).padding(PaddingValues(bottom = if (showBottomBar) 80.dp else 0.dp))) {
+                    Box(modifier = Modifier.padding(innerPadding)) {
                         HomeV2Screen(
                             viewModel = viewModel,
                             onLeaderboardClick = { navController.navigate(BottomTab.LeaderboardTab.route) },
