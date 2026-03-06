@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -162,7 +163,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
                 // Home tab — new HomeV2
                 composable(BottomTab.Home.route) {
                     val viewModel: HomeV2ViewModel = hiltViewModel()
-                    Box(modifier = Modifier.padding(innerPadding).padding(bottom = if (showBottomBar) 80.dp else 0.dp)) {
+                    Box(modifier = Modifier.padding(innerPadding).padding(PaddingValues(bottom = if (showBottomBar) 80.dp else 0.dp))) {
                         HomeV2Screen(
                             viewModel = viewModel,
                             onLeaderboardClick = { navController.navigate(BottomTab.LeaderboardTab.route) },
@@ -174,14 +175,14 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
                 // Schedules tab
                 composable(BottomTab.Schedules.route) {
                     val viewModel: SchedulesViewModel = hiltViewModel()
-                    Box(modifier = Modifier.padding(innerPadding).padding(bottom = if (showBottomBar) 80.dp else 0.dp)) {
+                    Box(modifier = Modifier.padding(innerPadding).padding(PaddingValues(bottom = if (showBottomBar) 80.dp else 0.dp))) {
                         SchedulesScreen(viewModel = viewModel)
                     }
                 }
 
                 // Leaderboard tab
                 composable(BottomTab.LeaderboardTab.route) {
-                    Box(modifier = Modifier.padding(innerPadding).padding(bottom = if (showBottomBar) 80.dp else 0.dp)) {
+                    Box(modifier = Modifier.padding(innerPadding).padding(PaddingValues(bottom = if (showBottomBar) 80.dp else 0.dp))) {
                         LeaderboardScreen(
                             onBack = { navController.popBackStack() }
                         )
@@ -191,7 +192,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
                 // Screen Time tab
                 composable(BottomTab.ScreenTime.route) {
                     val viewModel: ScreenTimeViewModel = hiltViewModel()
-                    Box(modifier = Modifier.padding(innerPadding).padding(bottom = if (showBottomBar) 80.dp else 0.dp)) {
+                    Box(modifier = Modifier.padding(innerPadding).padding(PaddingValues(bottom = if (showBottomBar) 80.dp else 0.dp))) {
                         ScreenTimeScreen(viewModel = viewModel)
                     }
                 }
@@ -199,7 +200,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
                 // Social tab — accountability partners
                 composable(BottomTab.Social.route) {
                     val viewModel: SocialViewModel = hiltViewModel()
-                    Box(modifier = Modifier.padding(innerPadding).padding(bottom = if (showBottomBar) 80.dp else 0.dp)) {
+                    Box(modifier = Modifier.padding(innerPadding).padding(PaddingValues(bottom = if (showBottomBar) 80.dp else 0.dp))) {
                         SocialScreen(viewModel = viewModel)
                     }
                 }
@@ -263,7 +264,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
-                        .padding(horizontal = 20.dp, bottom = 12.dp)
+                        .padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
                 )
             }
         }
