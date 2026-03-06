@@ -29,6 +29,7 @@ import com.bepresent.android.ui.homev2.components.IntentionsCard
 import com.bepresent.android.ui.homev2.components.SessionCountdownCard
 import com.bepresent.android.ui.homev2.components.SessionGoalSheet
 import com.bepresent.android.ui.homev2.components.SessionModeSheet
+import com.bepresent.android.ui.homev2.components.StreakSheet
 import com.bepresent.android.ui.intention.IntentionConfigSheet
 import com.bepresent.android.ui.profile.ProfileSheet
 
@@ -43,6 +44,7 @@ fun HomeV2Screen(
 
     // Sheet states
     var showProfileSheet by remember { mutableStateOf(false) }
+    var showStreakSheet by remember { mutableStateOf(false) }
     var showModeSheet by remember { mutableStateOf(false) }
     var showGoalSheet by remember { mutableStateOf(false) }
     var showIntentionConfig by remember { mutableStateOf(false) }
@@ -65,6 +67,7 @@ fun HomeV2Screen(
                 isStreakFrozen = uiState.isStreakFrozen,
                 weeklyXp = uiState.weeklyXp,
                 onProfileClick = { showProfileSheet = true },
+                onStreakClick = { showStreakSheet = true },
                 onDevClick = onDevClick,
                 modifier = Modifier.padding(top = statusBarTop + 4.dp, bottom = 4.dp)
             )
@@ -137,6 +140,15 @@ fun HomeV2Screen(
     }
 
     // --- Bottom Sheets ---
+
+    if (showStreakSheet) {
+        StreakSheet(
+            intentions = uiState.intentions,
+            isStreakFrozen = uiState.isStreakFrozen,
+            onDismiss = { showStreakSheet = false },
+            onAddIntention = { showIntentionConfig = true }
+        )
+    }
 
     if (showProfileSheet) {
         ProfileSheet(
