@@ -28,7 +28,8 @@ enum class FullButtonAppearance {
     Primary,
     Gray,
     Plain,
-    DangerShadow
+    DangerShadow,
+    SuccessShadow
 }
 
 @Composable
@@ -46,6 +47,7 @@ fun FullButton(
         FullButtonAppearance.Gray -> HomeV2Tokens.Neutral200
         FullButtonAppearance.Plain -> Color.Transparent
         FullButtonAppearance.DangerShadow -> HomeV2Tokens.DangerPrimary
+        FullButtonAppearance.SuccessShadow -> HomeV2Tokens.GreenPrimary
     }
 
     val contentColor = when (appearance) {
@@ -53,11 +55,13 @@ fun FullButton(
         FullButtonAppearance.Gray -> HomeV2Tokens.NeutralBlack
         FullButtonAppearance.Plain -> HomeV2Tokens.BrandPrimary
         FullButtonAppearance.DangerShadow -> Color.White
+        FullButtonAppearance.SuccessShadow -> Color.White
     }
 
     val dropShadowColor = when (appearance) {
         FullButtonAppearance.DangerShadow -> HomeV2Tokens.DangerShadow
         FullButtonAppearance.Primary -> HomeV2Tokens.BrandPrimary.copy(alpha = 0.4f)
+        FullButtonAppearance.SuccessShadow -> HomeV2Tokens.GreenPrimary.copy(alpha = 0.5f)
         else -> null
     }
 

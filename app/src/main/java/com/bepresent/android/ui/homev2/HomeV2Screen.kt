@@ -1,12 +1,10 @@
 package com.bepresent.android.ui.homev2
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,14 +12,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.ui.zIndex
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.bepresent.android.data.db.AppIntention
 import com.bepresent.android.ui.homev2.components.ActiveSessionCard
+import com.bepresent.android.ui.homev2.components.XPRewardPopup
 import com.bepresent.android.ui.homev2.components.BlockedTimeCard
 import com.bepresent.android.ui.homev2.components.HomeDateCarousel
 import com.bepresent.android.ui.homev2.components.HomeHeaderRow
@@ -52,6 +54,8 @@ fun HomeV2Screen(
     onDevClick: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val showXpPopup by viewModel.showXpPopup.collectAsState()
+    val xpPopupAmount by viewModel.xpPopupAmount.collectAsState()
 
     // Sheet states
     var showProfileSheet by remember { mutableStateOf(false) }
@@ -63,6 +67,16 @@ fun HomeV2Screen(
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val isIdle = uiState.screenState == HomeScreenState.Idle
+
+    // Animated progress: 1 = idle layout, 0 = active/countdown layout
+    val idleProgress by animateFloatAsState(
+        targetValue = if (isIdle) 1f else 0f,
+        animationSpec = tween(400),
+        label = "idleProgress"
+    )
+    // Only apply scroll when fully idle; use weight on card when animating or active
+    val fullyIdle = idleProgress == 1f
+    val scrollState = rememberScrollState()
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         // Background gradient
@@ -84,39 +98,39 @@ fun HomeV2Screen(
                 modifier = Modifier.padding(top = statusBarTop, bottom = 2.dp)
             )
 
-            // Scrollable body
+            // Body — scrollable only when fully idle
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .then(if (fullyIdle) Modifier.verticalScroll(scrollState) else Modifier)
             ) {
-                // Date carousel — slides up/out when leaving idle
-                AnimatedVisibility(
-                    visible = isIdle,
-                    enter = slideInVertically(
-                        initialOffsetY = { -it },
-                        animationSpec = tween(350)
-                    ) + fadeIn(animationSpec = tween(350)),
-                    exit = slideOutVertically(
-                        targetOffsetY = { -it },
-                        animationSpec = tween(350)
-                    ) + fadeOut(animationSpec = tween(350))
+                // Date carousel — collapses upward with top-clip
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clipToBounds()
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(constraints)
+                            val h = (placeable.height * idleProgress).roundToInt()
+                            layout(placeable.width, h) {
+                                // Anchor at bottom so content clips from the top
+                                placeable.place(0, h - placeable.height)
+                            }
+                        }
                 ) {
                     HomeDateCarousel(
                         days = uiState.days,
                         modifier = Modifier
                             .padding(top = 4.dp)
-                            .zIndex(1f)
+                            .graphicsLayer { alpha = idleProgress }
                     )
                 }
 
-                // Main card — state-switched with cross-fade
+                // Main card — fills remaining space when animating/active
                 CardV2(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .then(
-                            if (!isIdle) Modifier.fillMaxHeight() else Modifier
-                        )
+                        .then(if (!fullyIdle) Modifier.weight(1f) else Modifier)
                 ) {
                     AnimatedContent(
                         targetState = uiState.screenState,
@@ -147,46 +161,54 @@ fun HomeV2Screen(
                                     onTakeBreak = { /* TODO: break flow */ },
                                     onEndBreak = { /* TODO: end break */ },
                                     onGiveUp = { viewModel.giveUpSession() },
-                                    onBeastModeInfo = { /* TODO: beast mode info */ }
+                                    onBeastModeInfo = { /* TODO: beast mode info */ },
+                                    onFinishAndUnblock = { viewModel.finishAndUnblock() }
                                 )
                             }
                         }
                     }
                 }
 
-                // Only show intentions + bottom padding in idle
-                AnimatedVisibility(
-                    visible = isIdle,
-                    enter = slideInVertically(
-                        initialOffsetY = { it },
-                        animationSpec = tween(350)
-                    ) + fadeIn(animationSpec = tween(350)),
-                    exit = slideOutVertically(
-                        targetOffsetY = { it },
-                        animationSpec = tween(350)
-                    ) + fadeOut(animationSpec = tween(350))
-                ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        // Intentions card
-                        CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
-                            IntentionsCard(
-                                intentions = uiState.intentions,
-                                onReload = { /* TODO: reload intentions */ },
-                                onAdd = {
-                                    showIntentionConfig = true
-                                },
-                                onIntentionClick = { intention ->
-                                    editingIntention = intention
-                                }
-                            )
+                // Intentions — collapses downward with bottom-clip, constant gap
+                Column(
+                    modifier = Modifier
+                        .clipToBounds()
+                        .graphicsLayer { alpha = idleProgress }
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(constraints)
+                            val h = (placeable.height * idleProgress).roundToInt()
+                            layout(placeable.width, h) {
+                                // Anchor at top so content clips from the bottom
+                                placeable.place(0, 0)
+                            }
                         }
+                ) {
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                        Spacer(modifier = Modifier.height(100.dp)) // Bottom padding for tab bar
+                    // Intentions card
+                    CardV2(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        IntentionsCard(
+                            intentions = uiState.intentions,
+                            onReload = { /* TODO: reload intentions */ },
+                            onAdd = {
+                                showIntentionConfig = true
+                            },
+                            onIntentionClick = { intention ->
+                                editingIntention = intention
+                            }
+                        )
                     }
+
+                    Spacer(modifier = Modifier.height(100.dp)) // Bottom padding for tab bar
                 }
             }
+        }
+        // XP Reward Popup overlay
+        if (showXpPopup) {
+            XPRewardPopup(
+                xp = xpPopupAmount,
+                onDismiss = { viewModel.dismissXpPopup() }
+            )
         }
     }
 

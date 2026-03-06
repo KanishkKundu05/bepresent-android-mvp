@@ -45,11 +45,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bepresent.android.R
 import com.bepresent.android.ui.homev2.HomeV2Tokens
+import androidx.compose.material.icons.filled.Check
 
 enum class ActiveSessionSubState {
     Active,
     BreakRunning,
-    Completed
+    GoalReached
 }
 
 data class ActiveSessionUiState(
@@ -71,6 +72,7 @@ fun ActiveSessionCard(
     onEndBreak: () -> Unit,
     onGiveUp: () -> Unit,
     onBeastModeInfo: () -> Unit,
+    onFinishAndUnblock: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -83,7 +85,7 @@ fun ActiveSessionCard(
         )
 
         // Drifting clouds (not shown during completion)
-        if (state.subState != ActiveSessionSubState.Completed) {
+        if (state.subState != ActiveSessionSubState.GoalReached) {
             DriftingClouds()
         }
 
@@ -99,7 +101,7 @@ fun ActiveSessionCard(
             // Session icon — brick with optional burst
             Box(contentAlignment = Alignment.Center) {
                 // Burst behind icon on completion
-                if (state.subState == ActiveSessionSubState.Completed) {
+                if (state.subState == ActiveSessionSubState.GoalReached) {
                     val infiniteTransition = rememberInfiniteTransition(label = "burst")
                     val rotation by infiniteTransition.animateFloat(
                         initialValue = 0f,
@@ -134,7 +136,7 @@ fun ActiveSessionCard(
             // Title
             Text(
                 text = when (state.subState) {
-                    ActiveSessionSubState.Completed -> "Session Complete!"
+                    ActiveSessionSubState.GoalReached -> "Session Complete!"
                     ActiveSessionSubState.BreakRunning -> "On a Break"
                     ActiveSessionSubState.Active -> state.sessionName
                 },
@@ -274,13 +276,18 @@ fun ActiveSessionCard(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                ActiveSessionSubState.Completed -> {
-                    // No break controls needed
+                ActiveSessionSubState.GoalReached -> {
+                    FullButton(
+                        title = "Finish and Unblock",
+                        icon = Icons.Default.Check,
+                        appearance = FullButtonAppearance.SuccessShadow,
+                        onClick = onFinishAndUnblock
+                    )
                 }
             }
 
             // Give Up / Beast Mode row
-            if (state.subState != ActiveSessionSubState.Completed) {
+            if (state.subState != ActiveSessionSubState.GoalReached) {
                 if (state.beastMode) {
                     FullButton(
                         title = "Beast Mode - No Giving Up",

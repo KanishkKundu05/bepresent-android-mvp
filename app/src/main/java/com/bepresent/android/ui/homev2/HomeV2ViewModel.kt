@@ -10,6 +10,7 @@ import com.bepresent.android.data.db.PresentSession
 import com.bepresent.android.data.usage.UsageStatsRepository
 import com.bepresent.android.features.intentions.IntentionManager
 import com.bepresent.android.features.sessions.SessionManager
+import com.bepresent.android.features.sessions.SessionStateMachine
 import com.bepresent.android.permissions.PermissionManager
 import com.bepresent.android.ui.homev2.components.ActiveSessionSubState
 import com.bepresent.android.ui.homev2.components.ActiveSessionUiState
@@ -72,6 +73,11 @@ class HomeV2ViewModel @Inject constructor(
     private val _sessionBeastMode = MutableStateFlow(false)
     private val _totalBlockedTodayMs = MutableStateFlow(0L)
     private val _activeSessionUi = MutableStateFlow(ActiveSessionUiState())
+
+    private val _showXpPopup = MutableStateFlow(false)
+    val showXpPopup: StateFlow<Boolean> = _showXpPopup
+    private val _xpPopupAmount = MutableStateFlow(0)
+    val xpPopupAmount: StateFlow<Int> = _xpPopupAmount
 
     private var countdownJob: Job? = null
     private var sessionTimerJob: Job? = null
@@ -200,11 +206,11 @@ class HomeV2ViewModel @Inject constructor(
                 val elapsed = now - started
                 val remaining = (goalMs - elapsed).coerceAtLeast(0)
                 val progress = (elapsed.toFloat() / goalMs).coerceIn(0f, 1f)
-                val xp = session.goalDurationMinutes * 2
+                val (xp, _) = SessionStateMachine.calculateRewards(session.goalDurationMinutes)
 
-                val subState = when {
-                    session.state == PresentSession.STATE_GOAL_REACHED -> ActiveSessionSubState.Completed
-                    session.state == PresentSession.STATE_COMPLETED -> ActiveSessionSubState.Completed
+                val subState = when (session.state) {
+                    PresentSession.STATE_GOAL_REACHED -> ActiveSessionSubState.GoalReached
+                    PresentSession.STATE_COMPLETED -> ActiveSessionSubState.GoalReached
                     else -> ActiveSessionSubState.Active
                 }
 
@@ -240,6 +246,22 @@ class HomeV2ViewModel @Inject constructor(
             sessionManager.complete(session.id)
             resetToIdle()
         }
+    }
+
+    fun finishAndUnblock() {
+        viewModelScope.launch {
+            val session = sessionManager.getActiveSession() ?: return@launch
+            val (xp, _) = SessionStateMachine.calculateRewards(session.goalDurationMinutes)
+            _xpPopupAmount.value = xp
+            _showXpPopup.value = true
+            sessionManager.complete(session.id)
+            resetToIdle()
+        }
+    }
+
+    fun dismissXpPopup() {
+        _showXpPopup.value = false
+        _xpPopupAmount.value = 0
     }
 
     fun cancelSession() {
