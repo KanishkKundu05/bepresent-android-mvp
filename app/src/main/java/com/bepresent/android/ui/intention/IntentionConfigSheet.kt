@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +60,7 @@ fun IntentionConfigSheet(
     var allowedOpens by remember { mutableIntStateOf(existingIntention?.allowedOpensPerDay ?: 10) }
     var timePerOpen by remember { mutableIntStateOf(existingIntention?.timePerOpenMinutes ?: 5) }
     var showAppPicker by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -186,7 +188,7 @@ fun IntentionConfigSheet(
             if (onDelete != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 TextButton(
-                    onClick = onDelete,
+                    onClick = { showDeleteConfirmation = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -212,6 +214,47 @@ fun IntentionConfigSheet(
                 }
                 showAppPicker = false
             }
+        )
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteConfirmation && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = {
+                Text(
+                    text = "Delete Intention",
+                    fontWeight = FontWeight.Bold,
+                    color = HomeV2Tokens.NeutralBlack
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete this intention? This action cannot be undone.",
+                    color = HomeV2Tokens.NeutralBlack
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmation = false
+                    onDelete()
+                }) {
+                    Text(
+                        text = "Delete",
+                        color = HomeV2Tokens.DangerPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text(
+                        text = "Cancel",
+                        color = HomeV2Tokens.NeutralBlack
+                    )
+                }
+            },
+            containerColor = HomeV2Tokens.NeutralWhite
         )
     }
 }
