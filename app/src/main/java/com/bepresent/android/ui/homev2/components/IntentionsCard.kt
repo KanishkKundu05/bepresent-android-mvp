@@ -1,6 +1,7 @@
 package com.bepresent.android.ui.homev2.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,12 +71,20 @@ fun IntentionsCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            IconButton(onClick = onAdd, modifier = Modifier.size(32.dp)) {
+            IconButton(
+                onClick = onAdd,
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(
+                        color = HomeV2Tokens.BrandPrimary,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add intention",
-                    modifier = Modifier.size(20.dp),
-                    tint = HomeV2Tokens.BrandPrimary
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
                 )
             }
         }
