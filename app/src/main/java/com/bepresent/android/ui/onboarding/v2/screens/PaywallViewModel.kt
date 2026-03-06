@@ -8,6 +8,7 @@ import com.bepresent.android.data.subscription.SubscriptionManager
 import com.stripe.android.paymentsheet.PaymentSheetResult
 import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,6 +47,8 @@ class PaywallViewModel @Inject constructor(
                     isLoading = false,
                     clientSecret = result.clientSecret
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e("PaywallViewModel", "Failed to create subscription", e)
                 _uiState.value = _uiState.value.copy(
@@ -54,6 +57,10 @@ class PaywallViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun consumeClientSecret() {
+        _uiState.value = _uiState.value.copy(clientSecret = null)
     }
 
     fun handlePaymentResult(result: PaymentSheetResult) {

@@ -55,17 +55,12 @@ fun PaywallScreen(
     // When we get a clientSecret, present PaymentSheet
     LaunchedEffect(uiState.clientSecret) {
         val secret = uiState.clientSecret ?: return@LaunchedEffect
+        // Consume immediately so recomposition/recreation doesn't re-trigger
+        viewModel.consumeClientSecret()
         try {
             paymentSheet.presentWithPaymentIntent(
                 paymentIntentClientSecret = secret,
                 configuration = PaymentSheet.Configuration.Builder("BePresent")
-                    .googlePay(
-                        PaymentSheet.GooglePayConfiguration(
-                            environment = PaymentSheet.GooglePayConfiguration.Environment.Test,
-                            countryCode = "US",
-                            currencyCode = "USD"
-                        )
-                    )
                     .build()
             )
         } catch (e: Exception) {
