@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -73,21 +74,22 @@ fun IntentionsCard(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            IconButton(
-                onClick = onAdd,
+            Box(
                 modifier = Modifier
-                    .height(22.dp)
-                    .width(30.dp)
+                    .height(24.dp)
+                    .width(38.dp)
                     .background(
                         color = HomeV2Tokens.BrandPrimary,
-                        shape = RoundedCornerShape(11.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
+                    .clickable(onClick = onAdd),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add intention",
-                    modifier = Modifier.size(14.dp),
-                    tint = Color.White
+                Text(
+                    text = "+",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
                 )
             }
         }

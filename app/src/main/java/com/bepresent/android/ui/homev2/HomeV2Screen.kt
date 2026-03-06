@@ -1,5 +1,6 @@
 package com.bepresent.android.ui.homev2
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.bepresent.android.data.db.AppIntention
 import com.bepresent.android.ui.homev2.components.ActiveSessionCard
@@ -52,7 +54,7 @@ fun HomeV2Screen(
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         // Background gradient
         BackgroundV2()
 
@@ -69,7 +71,7 @@ fun HomeV2Screen(
                 onProfileClick = { showProfileSheet = true },
                 onStreakClick = { showStreakSheet = true },
                 onDevClick = onDevClick,
-                modifier = Modifier.padding(top = statusBarTop + 2.dp, bottom = 4.dp)
+                modifier = Modifier.padding(top = statusBarTop, bottom = 2.dp)
             )
 
             // Scrollable body

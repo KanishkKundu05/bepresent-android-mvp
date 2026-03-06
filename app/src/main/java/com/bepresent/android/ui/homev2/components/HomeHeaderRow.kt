@@ -40,7 +40,7 @@ fun HomeHeaderRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Profile icon button
