@@ -123,7 +123,8 @@ fun BackgroundV2(
             .fillMaxSize()
             .drawBehind {
                 val colors = listOf(
-                    Color(0xFF003BFF),  // blue1 — darkest center (top)
+                    Color(0xFF0020CC),  // blue0 — darker than button blue at center
+                    Color(0xFF003BFF),  // blue1 — matches button blue
                     Color(0xFF55B7FF),  // blue2 — mid
                     Color(0xFFABDDFF)   // blue3 — lightest edge (bottom)
                 )
