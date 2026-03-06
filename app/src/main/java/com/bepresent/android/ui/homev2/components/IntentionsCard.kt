@@ -5,12 +5,17 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -76,20 +81,29 @@ fun IntentionsCard(
 
             Box(
                 modifier = Modifier
-                    .height(24.dp)
-                    .width(38.dp)
-                    .background(
-                        color = HomeV2Tokens.BrandPrimary,
-                        shape = RoundedCornerShape(12.dp)
+                    .height(29.dp)
+                    .width(35.dp)
+                    .shadow(
+                        elevation = 4.dp,
+                        shape = RoundedCornerShape(14.dp),
+                        ambientColor = HomeV2Tokens.BrandPrimary.copy(alpha = 0.3f),
+                        spotColor = HomeV2Tokens.BrandPrimary.copy(alpha = 0.3f)
                     )
-                    .clickable(onClick = onAdd),
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(color = HomeV2Tokens.BrandPrimary)
+                    .clickable(
+                        onClick = onAdd,
+                        indication = rememberRipple(color = Color.White.copy(alpha = 0.3f)),
+                        interactionSource = remember { MutableInteractionSource() }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "+",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color.White
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.offset(y = (-1.5).dp)
                 )
             }
         }
