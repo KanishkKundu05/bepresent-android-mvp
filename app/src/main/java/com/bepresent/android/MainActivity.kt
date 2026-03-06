@@ -92,10 +92,15 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var analyticsManager: AnalyticsManager
 
+    private var isReady = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Keep splash visible until navigation destination is resolved
+        splashScreen.setKeepOnScreenCondition { !isReady }
 
         // Track app foreground/background via ProcessLifecycleOwner
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -111,19 +116,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BePresentTheme {
-                MainAppContent(analyticsManager, preferencesManager)
+                MainAppContent(analyticsManager, preferencesManager, onReady = { isReady = true })
             }
         }
     }
 }
 
 @Composable
-private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManager: PreferencesManager) {
+private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManager: PreferencesManager, onReady: () -> Unit) {
     // Check onboarding status before rendering NavHost to avoid flash
     var startDestination by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
         val completed = preferencesManager.onboardingCompleted.first()
         startDestination = if (completed) BottomTab.Home.route else "onboarding"
+        onReady()
     }
     val resolvedStart = startDestination ?: return // Don't render until resolved
 
