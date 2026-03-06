@@ -76,16 +76,17 @@ fun IntentionsCard(
             IconButton(
                 onClick = onAdd,
                 modifier = Modifier
-                    .size(32.dp)
+                    .height(22.dp)
+                    .width(30.dp)
                     .background(
                         color = HomeV2Tokens.BrandPrimary,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(11.dp)
                     )
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add intention",
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(14.dp),
                     tint = Color.White
                 )
             }
