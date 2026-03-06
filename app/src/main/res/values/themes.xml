@@ -4,7 +4,7 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
     <style name="Theme.BePresent.Splash" parent="Theme.SplashScreen">
