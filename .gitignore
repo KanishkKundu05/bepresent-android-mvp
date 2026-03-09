@@ -10,3 +10,4 @@ local.properties
 .cxx
 
 .env.local
+node_modules/
