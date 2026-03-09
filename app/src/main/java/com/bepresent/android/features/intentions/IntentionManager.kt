@@ -3,6 +3,7 @@ package com.bepresent.android.features.intentions
 import android.content.Context
 import com.bepresent.android.data.analytics.AnalyticsEvents
 import com.bepresent.android.data.analytics.AnalyticsManager
+import com.bepresent.android.data.convex.ConvexManager
 import com.bepresent.android.debug.RuntimeLog
 import com.bepresent.android.data.db.AppIntention
 import com.bepresent.android.data.db.AppIntentionDao
@@ -20,7 +21,8 @@ class IntentionManager @Inject constructor(
     private val intentionDao: AppIntentionDao,
     private val sessionDao: PresentSessionDao,
     private val intentionAlarmScheduler: IntentionAlarmScheduler,
-    private val analyticsManager: AnalyticsManager
+    private val analyticsManager: AnalyticsManager,
+    private val convexManager: ConvexManager
 ) {
     fun observeAll(): Flow<List<AppIntention>> = intentionDao.getAll()
 
@@ -111,9 +113,35 @@ class IntentionManager @Inject constructor(
             "openApp: id=$intentionId opens=${intention.totalOpensToday}/${intention.allowedOpensPerDay} window=${intention.timePerOpenMinutes}m"
         )
         analyticsManager.track(AnalyticsEvents.HAS_APP_INTENTION)
+
+        // Notify accountability partners if user is over their daily limit
+        val isOverLimit = intention.totalOpensToday >= intention.allowedOpensPerDay
+        if (isOverLimit) {
+            notifyAccountabilityPartners(intention.appName, intention.allowedOpensPerDay)
+        }
+
         intentionDao.incrementOpens(intentionId)
         intentionDao.setOpenState(intentionId, true, System.currentTimeMillis())
         intentionAlarmScheduler.scheduleReblock(intentionId, intention.timePerOpenMinutes)
+    }
+
+    private suspend fun notifyAccountabilityPartners(appName: String, allowedOpensPerDay: Int) {
+        val client = convexManager.client ?: run {
+            RuntimeLog.w(TAG, "notifyAccountabilityPartners: Convex not configured")
+            return
+        }
+        try {
+            client.mutation<Unit>(
+                "accountabilityPartners:notifyBreak",
+                args = mapOf(
+                    "appName" to appName,
+                    "allowedOpensPerDay" to allowedOpensPerDay
+                )
+            )
+            RuntimeLog.i(TAG, "notifyAccountabilityPartners: break notification sent for $appName")
+        } catch (e: Exception) {
+            RuntimeLog.e(TAG, "notifyAccountabilityPartners: failed — ${e.message}")
+        }
     }
 
     suspend fun reblockApp(intentionId: String) {

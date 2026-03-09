@@ -105,7 +105,51 @@ export const remove = mutation({
 });
 
 /**
+ * Notify all accountability partners that the user broke their app intention.
+ * Called from the Android client when user taps "Open Anyway" past their daily limit.
+ */
+export const notifyBreak = mutation({
+  args: {
+    appName: v.string(),
+    allowedOpensPerDay: v.number(),
+  },
+  handler: async (ctx, { appName, allowedOpensPerDay }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_externalId", (q) => q.eq("externalId", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    const partners = await ctx.db
+      .query("accountabilityPartners")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .collect();
+
+    if (partners.length === 0) return;
+
+    // Schedule break SMS to each partner
+    for (const partner of partners) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.accountabilityPartners.sendBreakSms,
+        {
+          phoneNumber: partner.phoneNumber,
+          contactName: partner.contactName,
+          userName: user.displayName,
+          appName,
+          goal: allowedOpensPerDay,
+        }
+      );
+    }
+  },
+});
+
+/**
  * Send SMS via Twilio REST API (internal only — called by scheduler).
+ * Used for the "added as partner" welcome message.
  */
 export const sendSms = internalAction({
   args: {
@@ -143,6 +187,53 @@ export const sendSms = internalAction({
     if (!response.ok) {
       const errorBody = await response.text();
       console.error(`Twilio SMS failed: ${response.status} — ${errorBody}`);
+    }
+  },
+});
+
+/**
+ * Send break notification SMS via Twilio (internal only — called by scheduler).
+ * Matches the iOS message: "{name} opened distracting apps more than {goal} times today —
+ * breaking their goals. Check in to make sure they're okay!"
+ */
+export const sendBreakSms = internalAction({
+  args: {
+    phoneNumber: v.string(),
+    contactName: v.string(),
+    userName: v.string(),
+    appName: v.string(),
+    goal: v.number(),
+  },
+  handler: async (_ctx, { phoneNumber, userName, appName, goal }) => {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!accountSid || !authToken || !fromNumber) {
+      console.error("Twilio credentials not configured — skipping break SMS");
+      return;
+    }
+
+    const message = `${userName} opened ${appName} more than ${goal} time${goal === 1 ? "" : "s"} today — breaking their goals. Check in to make sure they're okay!`;
+
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: "Basic " + btoa(`${accountSid}:${authToken}`),
+      },
+      body: new URLSearchParams({
+        To: phoneNumber,
+        From: fromNumber,
+        Body: message,
+      }).toString(),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`Twilio break SMS failed: ${response.status} — ${errorBody}`);
     }
   },
 });
