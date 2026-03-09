@@ -68,14 +68,14 @@ fun HomeV2Screen(
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val isIdle = uiState.screenState == HomeScreenState.Idle
 
-    // Animated progress: 1 = idle layout, 0 = active/countdown layout
-    // iOS uses easeInOut(0.35s) for scroll + easeInOut(0.3s) for content
+    // Drives carousel, card, and intentions layout in sync (0 = active, 1 = idle)
     val idleProgress by animateFloatAsState(
         targetValue = if (isIdle) 1f else 0f,
         animationSpec = tween(350),
         label = "idleProgress"
     )
-    // Only apply scroll when fully idle; use weight on card when animating or active
+
+    // Scroll only when idle; weight(1f) requires bounded height during animation
     val fullyIdle = idleProgress == 1f
     val scrollState = rememberScrollState()
 
@@ -99,25 +99,17 @@ fun HomeV2Screen(
                 modifier = Modifier.padding(top = statusBarTop, bottom = 2.dp)
             )
 
-            // Body — scrollable only when fully idle
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(if (fullyIdle) Modifier.verticalScroll(scrollState) else Modifier)
             ) {
-                // Date carousel — collapses upward with top-clip
+                // Carousel — clips from top as idleProgress shrinks
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clipToBounds()
-                        .layout { measurable, constraints ->
-                            val placeable = measurable.measure(constraints)
-                            val h = (placeable.height * idleProgress).roundToInt()
-                            layout(placeable.width, h) {
-                                // Anchor at bottom so content clips from the top
-                                placeable.place(0, h - placeable.height)
-                            }
-                        }
+                        .animatedHeightClip(idleProgress, anchorBottom = true)
                 ) {
                     HomeDateCarousel(
                         days = uiState.days,
@@ -127,7 +119,7 @@ fun HomeV2Screen(
                     )
                 }
 
-                // Main card — fills remaining space when animating/active
+                // Card fills remaining space during animation
                 CardV2(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
@@ -170,19 +162,12 @@ fun HomeV2Screen(
                     }
                 }
 
-                // Intentions — collapses downward with bottom-clip, constant gap
+                // Intentions — clips from bottom as idleProgress shrinks
                 Column(
                     modifier = Modifier
                         .clipToBounds()
                         .graphicsLayer { alpha = idleProgress }
-                        .layout { measurable, constraints ->
-                            val placeable = measurable.measure(constraints)
-                            val h = (placeable.height * idleProgress).roundToInt()
-                            layout(placeable.width, h) {
-                                // Anchor at top so content clips from the bottom
-                                placeable.place(0, 0)
-                            }
-                        }
+                        .animatedHeightClip(idleProgress, anchorBottom = false)
                 ) {
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -276,7 +261,9 @@ fun HomeV2Screen(
 
     // Intention Config (edit)
     if (editingIntention != null) {
-        val existingPackages = uiState.intentions.map { it.packageName }.toSet() - editingIntention!!.packageName
+        val existingPackages = remember(uiState.intentions, editingIntention) {
+            uiState.intentions.map { it.packageName }.toSet() - editingIntention!!.packageName
+        }
         IntentionConfigSheet(
             existingIntention = editingIntention,
             excludePackages = existingPackages,
@@ -299,3 +286,13 @@ fun HomeV2Screen(
         )
     }
 }
+
+/** Animates height from full to 0 based on [progress], clipping content from one edge. */
+private fun Modifier.animatedHeightClip(progress: Float, anchorBottom: Boolean) =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val h = (placeable.height * progress).roundToInt()
+        layout(placeable.width, h) {
+            placeable.place(0, if (anchorBottom) h - placeable.height else 0)
+        }
+    }

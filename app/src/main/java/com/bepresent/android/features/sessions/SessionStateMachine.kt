@@ -105,15 +105,14 @@ object SessionStateMachine {
         }
     }
 
-    fun calculateRewards(goalDurationMinutes: Int): Pair<Int, Int> {
-        val (xp, coins) = when {
-            goalDurationMinutes <= 15 -> 3 to 3
-            goalDurationMinutes <= 30 -> 5 to 5
-            goalDurationMinutes <= 45 -> 8 to 8
-            goalDurationMinutes <= 60 -> 10 to 10
-            goalDurationMinutes <= 90 -> 15 to 15
-            else -> 25 to 25
-        }
-        return xp to coins
+    fun calculateRewards(goalDurationMinutes: Int): Pair<Int, Int> = when {
+        goalDurationMinutes <= 15  -> 3 to 1
+        goalDurationMinutes <= 30  -> 5 to 2
+        goalDurationMinutes <= 45  -> 8 to 4
+        goalDurationMinutes <= 60  -> 10 to 5
+        goalDurationMinutes <= 75  -> 13 to 7
+        goalDurationMinutes <= 90  -> 15 to 8
+        goalDurationMinutes <= 105 -> 20 to 9
+        else                       -> 25 to 10
     }
 }
