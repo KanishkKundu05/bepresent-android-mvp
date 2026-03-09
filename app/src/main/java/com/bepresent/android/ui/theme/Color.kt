@@ -50,3 +50,13 @@ val XpGold = Color(0xFFEAB308)
 val ShieldBlue = Color(0xFF3B82F6)
 val SuccessGreen = Color(0xFF22C55E)
 val FreezeCyan = Color(0xFF06B6D4)
+
+// Present brand
+val PresentBlue = Color(0xFF008AFC)
+
+// Tier colors
+val TierBronze = Color(0xFFCD7F32)
+val TierSilver = Color(0xFFC0C0C0)
+val TierGold = Color(0xFFFFD700)
+val TierPlatinum = Color(0xFFAF52DE)
+val TierDiamond = Color(0xFF008AFC)
