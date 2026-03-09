@@ -1,5 +1,6 @@
 package com.bepresent.android.ui.schedules
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +37,7 @@ fun SchedulesScreen(viewModel: SchedulesViewModel) {
     val sessions by viewModel.sessions.collectAsState()
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         BackgroundV2()
 
         LazyColumn(

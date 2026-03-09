@@ -102,7 +102,7 @@ fun SocialScreen(viewModel: SocialViewModel = hiltViewModel()) {
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         BackgroundV2()
 
         if (uiState.isLoading) {

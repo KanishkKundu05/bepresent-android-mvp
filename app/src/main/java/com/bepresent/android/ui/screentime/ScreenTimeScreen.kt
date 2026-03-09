@@ -54,7 +54,7 @@ fun ScreenTimeScreen(viewModel: ScreenTimeViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         BackgroundV2()
 
         if (!uiState.hasPermission) {
