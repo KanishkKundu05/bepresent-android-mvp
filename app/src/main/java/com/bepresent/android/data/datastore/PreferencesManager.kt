@@ -44,6 +44,11 @@ class PreferencesManager @Inject constructor(
         val STRIPE_CUSTOMER_ID = stringPreferencesKey("stripe_customer_id")
         val DEVICE_UUID = stringPreferencesKey("device_uuid")
         val INTENTION_COUNTDOWN_ENABLED = booleanPreferencesKey("intention_countdown_enabled")
+
+        // Session mode
+        val SESSION_MODE_INDEX = intPreferencesKey("session_mode_index")
+        val SESSION_ALLOWED_PACKAGES = stringPreferencesKey("session_allowed_packages")
+        val SESSION_BLOCKED_PACKAGES = stringPreferencesKey("session_blocked_packages")
     }
 
     // Flows
@@ -54,6 +59,15 @@ class PreferencesManager @Inject constructor(
     val lastFreezeGrantDate: Flow<String> = dataStore.data.map { it[Keys.LAST_FREEZE_GRANT_DATE] ?: "" }
     val activeSessionId: Flow<String?> = dataStore.data.map { it[Keys.ACTIVE_SESSION_ID] }
     val intentionCountdownEnabled: Flow<Boolean> = dataStore.data.map { it[Keys.INTENTION_COUNTDOWN_ENABLED] ?: false }
+    val sessionModeIndex: Flow<Int> = dataStore.data.map { it[Keys.SESSION_MODE_INDEX] ?: 0 }
+    val sessionAllowedPackages: Flow<Set<String>> = dataStore.data.map { raw ->
+        val csv = raw[Keys.SESSION_ALLOWED_PACKAGES] ?: return@map emptySet()
+        csv.split(",").filter { it.isNotBlank() }.toSet()
+    }
+    val sessionBlockedPackages: Flow<Set<String>> = dataStore.data.map { raw ->
+        val csv = raw[Keys.SESSION_BLOCKED_PACKAGES] ?: return@map emptySet()
+        csv.split(",").filter { it.isNotBlank() }.toSet()
+    }
 
     // Setters
     suspend fun setOnboardingCompleted(completed: Boolean) {
@@ -151,6 +165,18 @@ class PreferencesManager @Inject constructor(
 
     suspend fun setIntentionCountdownEnabled(enabled: Boolean) {
         dataStore.edit { it[Keys.INTENTION_COUNTDOWN_ENABLED] = enabled }
+    }
+
+    suspend fun setSessionModeIndex(index: Int) {
+        dataStore.edit { it[Keys.SESSION_MODE_INDEX] = index }
+    }
+
+    suspend fun setSessionAllowedPackages(packages: Set<String>) {
+        dataStore.edit { it[Keys.SESSION_ALLOWED_PACKAGES] = packages.joinToString(",") }
+    }
+
+    suspend fun setSessionBlockedPackages(packages: Set<String>) {
+        dataStore.edit { it[Keys.SESSION_BLOCKED_PACKAGES] = packages.joinToString(",") }
     }
 
     suspend fun getOrCreateDeviceUuid(): String {

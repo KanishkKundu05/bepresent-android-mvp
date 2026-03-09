@@ -50,6 +50,7 @@ data class InstalledApp(
 fun AppPickerSheet(
     multiSelect: Boolean,
     excludePackages: Set<String> = emptySet(),
+    preSelectedPackages: Set<String> = emptySet(),
     onDismiss: () -> Unit,
     onAppsSelected: (List<InstalledApp>) -> Unit
 ) {
@@ -57,7 +58,7 @@ fun AppPickerSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var searchQuery by remember { mutableStateOf("") }
     var installedApps by remember { mutableStateOf<List<InstalledApp>>(emptyList()) }
-    val selectedApps = remember { mutableStateListOf<String>() }
+    val selectedApps = remember { mutableStateListOf<String>().also { it.addAll(preSelectedPackages) } }
 
     LaunchedEffect(Unit) {
         val pm = context.packageManager
