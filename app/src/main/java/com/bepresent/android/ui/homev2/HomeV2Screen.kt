@@ -45,6 +45,7 @@ import com.bepresent.android.ui.homev2.components.SessionGoalSheet
 import com.bepresent.android.ui.homev2.components.SessionModeSheet
 import com.bepresent.android.ui.homev2.components.StreakSheet
 import com.bepresent.android.ui.intention.IntentionConfigSheet
+import com.bepresent.android.ui.picker.AppPickerSheet
 import com.bepresent.android.ui.profile.ProfileSheet
 
 @Composable
@@ -64,6 +65,7 @@ fun HomeV2Screen(
     var showModeSheet by remember { mutableStateOf(false) }
     var showGoalSheet by remember { mutableStateOf(false) }
     var showIntentionConfig by remember { mutableStateOf(false) }
+    var showAppPicker by remember { mutableStateOf(false) }
     var editingIntention by remember { mutableStateOf<AppIntention?>(null) }
 
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -221,12 +223,34 @@ fun HomeV2Screen(
     }
 
     if (showModeSheet) {
+        val activePackages = if (uiState.sessionModeIndex == 0)
+            uiState.sessionAllowedPackages else uiState.sessionBlockedPackages
         SessionModeSheet(
             currentModeIndex = uiState.sessionModeIndex,
+            selectedAppCount = activePackages.size,
             onDismiss = { showModeSheet = false },
             onSetMode = { index ->
                 viewModel.setSessionMode(index)
                 showModeSheet = false
+            },
+            onOpenAppList = {
+                showAppPicker = true
+            }
+        )
+    }
+
+    if (showAppPicker) {
+        val preSelected = if (uiState.sessionModeIndex == 0)
+            uiState.sessionAllowedPackages else uiState.sessionBlockedPackages
+        AppPickerSheet(
+            multiSelect = true,
+            preSelectedPackages = preSelected,
+            onDismiss = { showAppPicker = false },
+            onAppsSelected = { selectedApps ->
+                viewModel.setSessionApps(
+                    selectedApps.map { it.packageName }.toSet()
+                )
+                showAppPicker = false
             }
         )
     }

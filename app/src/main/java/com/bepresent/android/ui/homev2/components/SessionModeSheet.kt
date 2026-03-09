@@ -31,6 +31,7 @@ import com.bepresent.android.ui.homev2.HomeV2Tokens
 @Composable
 fun SessionModeSheet(
     currentModeIndex: Int,
+    selectedAppCount: Int = 0,
     onDismiss: () -> Unit,
     onSetMode: (index: Int) -> Unit,
     onOpenAppList: () -> Unit = {}
@@ -75,7 +76,10 @@ fun SessionModeSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (selectedIndex == 0) "Allowed Apps" else "Blocked Apps",
+                    text = buildString {
+                        append(if (selectedIndex == 0) "Allowed Apps" else "Blocked Apps")
+                        if (selectedAppCount > 0) append(" ($selectedAppCount)")
+                    },
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     color = HomeV2Tokens.NeutralBlack,

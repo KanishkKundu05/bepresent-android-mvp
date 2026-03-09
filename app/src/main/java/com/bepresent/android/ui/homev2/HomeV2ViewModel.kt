@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -50,6 +51,8 @@ data class HomeV2UiState(
     val isStreakFrozen: Boolean = false,
     val weeklyXp: Int = 0,
     val sessionModeIndex: Int = 0,        // 0 = All Apps, 1 = Specific Apps
+    val sessionAllowedPackages: Set<String> = emptySet(),
+    val sessionBlockedPackages: Set<String> = emptySet(),
     val sessionDurationMinutes: Int = 60,
     val sessionBeastMode: Boolean = false,
     val permissionsOk: Boolean = true,
@@ -69,6 +72,8 @@ class HomeV2ViewModel @Inject constructor(
     private val _screenState = MutableStateFlow(HomeScreenState.Idle)
     private val _countdownValue = MutableStateFlow(3)
     private val _sessionModeIndex = MutableStateFlow(0)
+    private val _sessionAllowedPackages = MutableStateFlow<Set<String>>(emptySet())
+    private val _sessionBlockedPackages = MutableStateFlow<Set<String>>(emptySet())
     private val _sessionDurationMinutes = MutableStateFlow(60)
     private val _sessionBeastMode = MutableStateFlow(false)
     private val _totalBlockedTodayMs = MutableStateFlow(0L)
@@ -116,7 +121,9 @@ class HomeV2ViewModel @Inject constructor(
                 minutes = "%02d".format(m),
                 seconds = "%02d".format(s),
                 sessionModeLabel = if (_sessionModeIndex.value == 0) "All apps" else "Specific apps",
-                sessionDurationLabel = formatDurationLabel(_sessionDurationMinutes.value)
+                sessionDurationLabel = formatDurationLabel(_sessionDurationMinutes.value),
+                selectedPackages = if (_sessionModeIndex.value == 0)
+                    _sessionAllowedPackages.value else _sessionBlockedPackages.value
             ),
             activeSessionState = activeSessionUiVal,
             intentions = intentions,
@@ -129,6 +136,8 @@ class HomeV2ViewModel @Inject constructor(
             isStreakFrozen = false,
             weeklyXp = xp,
             sessionModeIndex = _sessionModeIndex.value,
+            sessionAllowedPackages = _sessionAllowedPackages.value,
+            sessionBlockedPackages = _sessionBlockedPackages.value,
             sessionDurationMinutes = _sessionDurationMinutes.value,
             sessionBeastMode = _sessionBeastMode.value,
             permissionsOk = permissionManager.checkAll().criticalGranted,
@@ -137,6 +146,12 @@ class HomeV2ViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeV2UiState(days = generateDays()))
 
     init {
+        // Restore persisted session mode + selected packages
+        viewModelScope.launch {
+            preferencesManager.sessionModeIndex.first().let { _sessionModeIndex.value = it }
+            preferencesManager.sessionAllowedPackages.first().let { _sessionAllowedPackages.value = it }
+            preferencesManager.sessionBlockedPackages.first().let { _sessionBlockedPackages.value = it }
+        }
         // Poll blocked time every 5 seconds
         viewModelScope.launch {
             while (isActive) {
@@ -150,6 +165,17 @@ class HomeV2ViewModel @Inject constructor(
 
     fun setSessionMode(index: Int) {
         _sessionModeIndex.value = index
+        viewModelScope.launch { preferencesManager.setSessionModeIndex(index) }
+    }
+
+    fun setSessionApps(packages: Set<String>) {
+        if (_sessionModeIndex.value == 0) {
+            _sessionAllowedPackages.value = packages
+            viewModelScope.launch { preferencesManager.setSessionAllowedPackages(packages) }
+        } else {
+            _sessionBlockedPackages.value = packages
+            viewModelScope.launch { preferencesManager.setSessionBlockedPackages(packages) }
+        }
     }
 
     fun setSessionGoal(durationMinutes: Int, beastMode: Boolean) {
@@ -183,10 +209,12 @@ class HomeV2ViewModel @Inject constructor(
 
     private fun startSession() {
         viewModelScope.launch {
+            val packages = if (_sessionModeIndex.value == 0)
+                _sessionAllowedPackages.value else _sessionBlockedPackages.value
             sessionManager.createAndStart(
                 name = "Focus Session",
                 goalDurationMinutes = _sessionDurationMinutes.value,
-                blockedPackages = emptyList(), // TODO: wire actual app selection
+                blockedPackages = packages.toList(),
                 beastMode = _sessionBeastMode.value
             )
             _screenState.value = HomeScreenState.ActiveSession
