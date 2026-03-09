@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,10 +46,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import androidx.core.graphics.drawable.toBitmap
 import com.bepresent.android.ui.homev2.HomeV2Tokens
 import kotlinx.coroutines.delay
 
@@ -59,7 +65,8 @@ data class BlockedTimeState(
     val dailyRecordMinutes: Int = 0,
     val dailyRecordSeconds: Int = 0,
     val sessionModeLabel: String = "All apps",
-    val sessionDurationLabel: String = "1h"
+    val sessionDurationLabel: String = "1h",
+    val selectedPackages: Set<String> = emptySet()
 )
 
 @Composable
@@ -134,13 +141,22 @@ fun BlockedTimeCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(15.dp)
         ) {
-            // Session mode capsule
-            CapsuleEntry(
-                icon = Icons.Default.Shield,
-                label = state.sessionModeLabel,
-                onClick = onSessionModeClick,
-                modifier = Modifier.weight(1.68f)
-            )
+            // Session mode capsule with app icons
+            if (state.selectedPackages.isNotEmpty()) {
+                AppIconsCapsuleEntry(
+                    packages = state.selectedPackages,
+                    label = state.sessionModeLabel,
+                    onClick = onSessionModeClick,
+                    modifier = Modifier.weight(1.68f)
+                )
+            } else {
+                CapsuleEntry(
+                    icon = Icons.Default.Shield,
+                    label = state.sessionModeLabel,
+                    onClick = onSessionModeClick,
+                    modifier = Modifier.weight(1.68f)
+                )
+            }
             // Session duration capsule
             CapsuleEntry(
                 icon = Icons.Default.Timer,
@@ -256,6 +272,65 @@ private fun TimerSeparator(isDisabled: Boolean = false) {
         ),
         modifier = Modifier.padding(horizontal = 4.dp)
     )
+}
+
+@Composable
+private fun AppIconsCapsuleEntry(
+    packages: Set<String>,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val icons = remember(packages) {
+        val pm = context.packageManager
+        packages.take(3).mapNotNull { pkg ->
+            try {
+                pm.getApplicationIcon(pkg)
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(HomeV2Tokens.NeutralBlack.copy(alpha = 0.05f))
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp, horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Overlapping app icons
+        Box(modifier = Modifier.height(22.dp)) {
+            icons.forEachIndexed { index, drawable ->
+                Image(
+                    bitmap = remember(drawable) { drawable.toBitmap(64, 64).asImageBitmap() },
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(22.dp)
+                        .offset(x = (index * 14).dp)
+                        .zIndex((icons.size - index).toFloat())
+                        .clip(CircleShape)
+                )
+            }
+        }
+        // Spacing after icons stack
+        Spacer(modifier = Modifier.width((icons.size * 14 - 8).coerceAtLeast(6).dp))
+        Text(
+            text = if (packages.size > 3) "$label +${packages.size - 3}" else label,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = HomeV2Tokens.NeutralBlack,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = Color.Gray
+        )
+    }
 }
 
 @Composable
