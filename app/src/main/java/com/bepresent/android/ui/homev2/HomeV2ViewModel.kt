@@ -83,12 +83,13 @@ class HomeV2ViewModel @Inject constructor(
     private var sessionTimerJob: Job? = null
 
     val uiState: StateFlow<HomeV2UiState> = combine(
-        _screenState,
+        combine(_screenState, _activeSessionUi) { screen, sessionUi -> screen to sessionUi },
         _countdownValue,
         intentionManager.observeAll(),
         sessionManager.observeActiveSession(),
         preferencesManager.totalXp
-    ) { screenState, countdown, intentions, activeSession, xp ->
+    ) { screenAndUi, countdown, intentions, activeSession, xp ->
+        val (screenState, activeSessionUiVal) = screenAndUi
 
         // If there's an active session, ensure we're in ActiveSession state
         val effectiveState = if (activeSession != null && screenState == HomeScreenState.Idle) {
@@ -117,7 +118,7 @@ class HomeV2ViewModel @Inject constructor(
                 sessionModeLabel = if (_sessionModeIndex.value == 0) "All apps" else "Specific apps",
                 sessionDurationLabel = formatDurationLabel(_sessionDurationMinutes.value)
             ),
-            activeSessionState = _activeSessionUi.value,
+            activeSessionState = activeSessionUiVal,
             intentions = intentions,
             dailyQuestState = DailyQuestUiState(
                 completedSession = activeSession?.state == PresentSession.STATE_COMPLETED ||

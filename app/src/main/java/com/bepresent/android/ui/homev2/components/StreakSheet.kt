@@ -24,12 +24,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -267,6 +272,15 @@ private fun AppLimitStreakCell(
     isStreakFrozen: Boolean
 ) {
     val flameColor = if (isStreakFrozen) BlueFrozenAccent else HomeV2Tokens.OrangePrimary
+    val context = LocalContext.current
+    val appIcon = remember(intention.packageName) {
+        try {
+            context.packageManager.getApplicationIcon(intention.packageName)
+                .toBitmap(64, 64).asImageBitmap()
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     Row(
         modifier = Modifier
@@ -277,20 +291,30 @@ private fun AppLimitStreakCell(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // App icon placeholder (first letter)
-        Box(
-            modifier = Modifier
-                .size(35.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFFE5E7EB)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = intention.appName.take(1).uppercase(),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = HomeV2Tokens.NeutralBlack
+        // App icon
+        if (appIcon != null) {
+            Image(
+                bitmap = appIcon,
+                contentDescription = intention.appName,
+                modifier = Modifier
+                    .size(35.dp)
+                    .clip(RoundedCornerShape(8.dp))
             )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(35.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFFE5E7EB)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = intention.appName.take(1).uppercase(),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = HomeV2Tokens.NeutralBlack
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(12.dp))
