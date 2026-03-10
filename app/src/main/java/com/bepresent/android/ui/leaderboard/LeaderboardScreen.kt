@@ -25,7 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -154,7 +154,7 @@ private fun TieredLeaderboardContent(state: LeaderboardUiState) {
 
         Spacer(Modifier.height(12.dp))
 
-        HorizontalDivider()
+        Divider()
 
         // Scrollable entries
         LazyColumn(
@@ -505,7 +505,7 @@ private fun LeaderboardIntroContent(onDismiss: () -> Unit) {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            AnimatedVisibility(
+            androidx.compose.animation.AnimatedVisibility(
                 visible = showHeader,
                 enter = scaleIn(
                     animationSpec = spring(
@@ -548,7 +548,7 @@ private fun LeaderboardIntroContent(onDismiss: () -> Unit) {
         Spacer(Modifier.weight(0.5f))
 
         // Animated leaderboard list
-        AnimatedVisibility(
+        androidx.compose.animation.AnimatedVisibility(
             visible = showList,
             enter = fadeIn(animationSpec = tween(500))
         ) {
