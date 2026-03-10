@@ -1,5 +1,6 @@
 package com.bepresent.android.ui.homev2.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -27,6 +27,10 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -167,12 +171,22 @@ private fun CalendarDayCell(
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Completed",
-                            modifier = Modifier.size(24.dp),
-                            tint = Color.White
-                        )
+                        Canvas(modifier = Modifier.size(24.dp)) {
+                            val path = Path().apply {
+                                moveTo(size.width * 0.18f, size.height * 0.50f)
+                                lineTo(size.width * 0.40f, size.height * 0.72f)
+                                lineTo(size.width * 0.82f, size.height * 0.28f)
+                            }
+                            drawPath(
+                                path = path,
+                                color = Color.White,
+                                style = Stroke(
+                                    width = 3.dp.toPx(),
+                                    cap = StrokeCap.Round,
+                                    join = StrokeJoin.Round
+                                )
+                            )
+                        }
                     }
                 }
                 // Future / disabled → stroked circle only (no fill, no checkmark)
@@ -192,12 +206,22 @@ private fun CalendarDayCell(
                             .background(HomeV2Tokens.Neutral200),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Not completed",
-                            modifier = Modifier.size(24.dp),
-                            tint = Neutral800.copy(alpha = 0.5f)
-                        )
+                        Canvas(modifier = Modifier.size(24.dp)) {
+                            val path = Path().apply {
+                                moveTo(size.width * 0.18f, size.height * 0.50f)
+                                lineTo(size.width * 0.40f, size.height * 0.72f)
+                                lineTo(size.width * 0.82f, size.height * 0.28f)
+                            }
+                            drawPath(
+                                path = path,
+                                color = Neutral800.copy(alpha = 0.5f),
+                                style = Stroke(
+                                    width = 3.dp.toPx(),
+                                    cap = StrokeCap.Round,
+                                    join = StrokeJoin.Round
+                                )
+                            )
+                        }
                     }
                 }
             }
