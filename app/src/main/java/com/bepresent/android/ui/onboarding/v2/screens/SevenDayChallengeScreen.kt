@@ -68,28 +68,28 @@ fun SevenDayChallengeScreen(
             keyframe == 2 -> 1.07f
             else -> 1f
         },
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 18f),
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 95f),
         label = "hero_scale"
     )
 
-    // Keyframe animation sequence (~13s total, 15% of original speed)
+    // Keyframe animation sequence (trophy 2.3x faster, bullets 40% faster)
     LaunchedEffect(Unit) {
-        delay(1333)
+        delay(580)
         keyframe = 1  // show hero
-        delay(1667)
+        delay(725)
         keyframe = 2  // scale hero up
-        delay(2000)
+        delay(870)
         keyframe = 3  // settle hero
-        delay(2667)
+        delay(1160)
         keyframe = 4  // show subtitle
 
         // Stagger bullet appearances
         for (i in 1..CHALLENGE_BULLETS.size) {
-            delay(1333)
+            delay(952)
             visibleBullets = i
         }
 
-        delay(2000)
+        delay(1429)
         showSlider = true
     }
 
