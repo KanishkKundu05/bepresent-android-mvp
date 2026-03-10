@@ -42,10 +42,12 @@ class SessionManager @Inject constructor(
     ): PresentSession {
         val id = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
-        val packagesJson = JSONArray(blockedPackages).toString()
+        // Always include default social apps in the blocked list
+        val allBlocked = (blockedPackages.toSet() + DefaultBlockedApps.PACKAGES).toList()
+        val packagesJson = JSONArray(allBlocked).toString()
         RuntimeLog.d(
             TAG,
-            "createAndStart: name=$name duration=${goalDurationMinutes}m blocked=$blockedPackages json=$packagesJson"
+            "createAndStart: name=$name duration=${goalDurationMinutes}m userSelected=$blockedPackages totalBlocked=${allBlocked.size} json=$packagesJson"
         )
 
         val session = PresentSession(

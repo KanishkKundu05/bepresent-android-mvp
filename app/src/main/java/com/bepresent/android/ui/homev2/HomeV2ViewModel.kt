@@ -9,6 +9,7 @@ import com.bepresent.android.data.db.AppIntention
 import com.bepresent.android.data.db.PresentSession
 import com.bepresent.android.data.usage.UsageStatsRepository
 import com.bepresent.android.features.intentions.IntentionManager
+import com.bepresent.android.features.sessions.DefaultBlockedApps
 import com.bepresent.android.features.sessions.SessionManager
 import com.bepresent.android.features.sessions.SessionStateMachine
 import com.bepresent.android.permissions.PermissionManager
@@ -146,11 +147,17 @@ class HomeV2ViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeV2UiState(days = generateDays()))
 
     init {
-        // Restore persisted session mode + selected packages
+        // Restore persisted session mode + selected packages, seeding defaults if empty
         viewModelScope.launch {
             preferencesManager.sessionModeIndex.first().let { _sessionModeIndex.value = it }
             preferencesManager.sessionAllowedPackages.first().let { _sessionAllowedPackages.value = it }
-            preferencesManager.sessionBlockedPackages.first().let { _sessionBlockedPackages.value = it }
+            val savedBlocked = preferencesManager.sessionBlockedPackages.first()
+            // Always include default social apps in the UI selection
+            val merged = savedBlocked + DefaultBlockedApps.PACKAGES
+            _sessionBlockedPackages.value = merged
+            if (merged != savedBlocked) {
+                preferencesManager.setSessionBlockedPackages(merged)
+            }
         }
         // Poll blocked time every 5 seconds
         viewModelScope.launch {
