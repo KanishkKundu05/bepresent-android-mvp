@@ -94,14 +94,16 @@ fun BlockedTimeCard(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Daily record chip
+        val hasRecord = state.dailyRecordHours > 0 || state.dailyRecordMinutes > 0 || state.dailyRecordSeconds > 0
         Text(
-            text = "Your daily record: ${state.dailyRecordHours}h ${state.dailyRecordMinutes}m ${state.dailyRecordSeconds}s",
+            text = if (hasRecord) "Your daily record: ${state.dailyRecordHours}h ${state.dailyRecordMinutes}m ${state.dailyRecordSeconds}s"
+                   else "No record set yet",
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            color = HomeV2Tokens.BrandPrimary,
+            color = if (hasRecord) HomeV2Tokens.BrandPrimary else Color(0xFF9CA3AF),
             modifier = Modifier
                 .clip(CircleShape)
-                .background(HomeV2Tokens.Brand100)
+                .background(if (hasRecord) HomeV2Tokens.Brand100 else Color(0xFF9CA3AF).copy(alpha = 0.12f))
                 .padding(vertical = 6.dp, horizontal = 16.dp)
         )
 
