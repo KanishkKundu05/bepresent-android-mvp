@@ -9,6 +9,7 @@ import com.bepresent.android.data.db.AppIntention
 import com.bepresent.android.data.db.PresentSession
 import com.bepresent.android.data.usage.UsageStatsRepository
 import com.bepresent.android.features.intentions.IntentionManager
+import com.bepresent.android.features.sessions.DefaultAllowedApps
 import com.bepresent.android.features.sessions.DefaultBlockedApps
 import com.bepresent.android.features.sessions.SessionManager
 import com.bepresent.android.features.sessions.SessionStateMachine
@@ -150,7 +151,13 @@ class HomeV2ViewModel @Inject constructor(
         // Restore persisted session mode + selected packages, seeding defaults if empty
         viewModelScope.launch {
             preferencesManager.sessionModeIndex.first().let { _sessionModeIndex.value = it }
-            preferencesManager.sessionAllowedPackages.first().let { _sessionAllowedPackages.value = it }
+            val savedAllowed = preferencesManager.sessionAllowedPackages.first()
+            // Always include default productivity/utility apps in the allow list
+            val mergedAllowed = savedAllowed + DefaultAllowedApps.PACKAGES
+            _sessionAllowedPackages.value = mergedAllowed
+            if (mergedAllowed != savedAllowed) {
+                preferencesManager.setSessionAllowedPackages(mergedAllowed)
+            }
             val savedBlocked = preferencesManager.sessionBlockedPackages.first()
             // Always include default social apps in the UI selection
             val merged = savedBlocked + DefaultBlockedApps.PACKAGES

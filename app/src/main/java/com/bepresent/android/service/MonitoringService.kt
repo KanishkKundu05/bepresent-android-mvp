@@ -17,6 +17,7 @@ import com.bepresent.android.data.db.ScheduledSessionDao
 import com.bepresent.android.data.usage.UsageStatsRepository
 import com.bepresent.android.features.blocking.BlockedAppActivity
 import com.bepresent.android.features.schedules.ScheduledSessionManager
+import com.bepresent.android.features.sessions.DefaultAllowedApps
 import com.bepresent.android.features.sessions.SessionManager
 import com.bepresent.android.permissions.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -126,10 +127,12 @@ class MonitoringService : Service() {
         val scheduleBlocked = getScheduleBlockedPackages()
 
         val combined = sessionBlocked + intentionBlocked + scheduleBlocked
-        if (combined.isNotEmpty()) {
-            RuntimeLog.d(TAG, "getBlocked: session=$sessionBlocked intention=$intentionBlocked schedule=$scheduleBlocked")
+        // Never block default-allowed productivity/utility apps
+        val filtered = combined - DefaultAllowedApps.PACKAGES
+        if (filtered.isNotEmpty()) {
+            RuntimeLog.d(TAG, "getBlocked: session=$sessionBlocked intention=$intentionBlocked schedule=$scheduleBlocked allowed=${DefaultAllowedApps.PACKAGES.size}")
         }
-        return combined
+        return filtered
     }
 
     private suspend fun getScheduleBlockedPackages(): Set<String> {
