@@ -13,7 +13,6 @@ import com.bepresent.android.data.db.AppIntentionDao
 import com.bepresent.android.data.db.PresentSession
 import com.bepresent.android.data.db.PresentSessionDao
 import com.bepresent.android.data.usage.UsageStatsRepository
-import com.bepresent.android.debug.RuntimeLog
 import com.bepresent.android.features.blocking.BlockedAppActivity
 import com.bepresent.android.features.intentions.IntentionManager
 import com.bepresent.android.features.sessions.SessionManager
@@ -47,8 +46,7 @@ data class DevUiState(
     val totalCoins: Int = 0,
     val streakFreezeAvailable: Boolean = false,
     val activeSessionId: String? = null,
-    val onboardingCompleted: Boolean = false,
-    val runtimeLogs: List<String> = emptyList()
+    val onboardingCompleted: Boolean = false
 )
 
 @HiltViewModel
@@ -124,9 +122,8 @@ class DevViewModel @Inject constructor(
         )
     }
 
-    val uiState: StateFlow<DevUiState> = combine(baseUiState, RuntimeLog.entries) { state, logs ->
-        state.copy(runtimeLogs = logs)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DevUiState())
+    val uiState: StateFlow<DevUiState> = baseUiState
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DevUiState())
 
     private data class DataGroup(
         val xp: Int,
@@ -138,7 +135,6 @@ class DevViewModel @Inject constructor(
     )
 
     init {
-        RuntimeLog.i(TAG, "DevViewModel initialized")
         // Poll foreground app and blocked packages every 2s
         viewModelScope.launch {
             while (isActive) {
@@ -189,12 +185,10 @@ class DevViewModel @Inject constructor(
     }
 
     fun startMonitoring() {
-        RuntimeLog.i(TAG, "startMonitoring from Dev tools")
         MonitoringService.start(getApplication())
     }
 
     fun stopMonitoring() {
-        RuntimeLog.i(TAG, "stopMonitoring from Dev tools")
         MonitoringService.stop(getApplication())
     }
 
@@ -202,7 +196,6 @@ class DevViewModel @Inject constructor(
         val packageName = _foregroundApp.value
             ?: _blockedPackages.value.firstOrNull()
             ?: "com.instagram.android"
-        RuntimeLog.i(TAG, "launchTestShield: type=$shieldType package=$packageName")
         val intent = Intent(getApplication(), BlockedAppActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                 Intent.FLAG_ACTIVITY_CLEAR_TOP or
@@ -226,11 +219,4 @@ class DevViewModel @Inject constructor(
         }
     }
 
-    fun clearRuntimeLogs() {
-        RuntimeLog.clear()
-    }
-
-    companion object {
-        private const val TAG = "BP_Dev"
-    }
 }

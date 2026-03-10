@@ -181,36 +181,6 @@ fun DevScreen(
                 }
             }
 
-            // --- Runtime logs ---
-            SectionHeader("Runtime Logs (${state.runtimeLogs.size})")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { viewModel.clearRuntimeLogs() }) {
-                    Text("Clear Logs")
-                }
-            }
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (state.runtimeLogs.isEmpty()) {
-                        Text(
-                            "No runtime logs yet",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        state.runtimeLogs.takeLast(40).forEach { line ->
-                            Text(
-                                line,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
