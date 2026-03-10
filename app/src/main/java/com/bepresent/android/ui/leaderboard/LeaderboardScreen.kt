@@ -1,11 +1,10 @@
 package com.bepresent.android.ui.leaderboard
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bepresent.android.R
@@ -58,6 +58,7 @@ import com.bepresent.android.ui.theme.TierGold
 import com.bepresent.android.ui.theme.TierPlatinum
 import com.bepresent.android.ui.theme.TierSilver
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 // ── Main entry point ──
@@ -460,9 +461,14 @@ private fun LeaderboardResultsContent(
 
 @Composable
 private fun LeaderboardIntroContent(onDismiss: () -> Unit) {
-    var showHeader by remember { mutableStateOf(false) }
-    var showList by remember { mutableStateOf(false) }
+    // Trophy slide-up animation
+    val trophyOffset = remember { Animatable(80f) }
+    val trophyAlpha = remember { Animatable(0f) }
 
+    // Text fade-in
+    val textAlpha = remember { Animatable(0f) }
+
+    // Per-entry visibility (staggered)
     val dummyEntries = remember {
         listOf(
             "Amelia Flores" to 100, "Jasper Rossi" to 95,
@@ -473,12 +479,43 @@ private fun LeaderboardIntroContent(onDismiss: () -> Unit) {
             "Corey Aminoff" to 50, "Miracle Herwitz" to 45
         )
     }
+    val totalItems = dummyEntries.size + 1 // +1 for "Me" row
+    val entryAlphas = remember { List(totalItems) { Animatable(0f) } }
+    val entryOffsets = remember { List(totalItems) { Animatable(30f) } }
+
+    var showButton by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        delay(300)
+
+        // Trophy slides up smoothly
+        launch {
+            trophyOffset.animateTo(0f, tween(800, easing = EaseOutCubic))
+        }
+        launch {
+            trophyAlpha.animateTo(1f, tween(700, easing = EaseOutCubic))
+        }
+
+        delay(500)
+
+        // Text fades in
+        textAlpha.animateTo(1f, tween(500, easing = EaseOutCubic))
+
+        delay(400)
+
+        // Staggered entry appearance
+        for (i in 0 until totalItems) {
+            launch {
+                entryAlphas[i].animateTo(1f, tween(350, easing = EaseOutCubic))
+            }
+            launch {
+                entryOffsets[i].animateTo(0f, tween(350, easing = EaseOutCubic))
+            }
+            delay(60)
+        }
+
         delay(200)
-        showHeader = true
-        delay(1300)
-        showList = true
+        showButton = true
     }
 
     Column(
@@ -505,28 +542,30 @@ private fun LeaderboardIntroContent(onDismiss: () -> Unit) {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showHeader,
-                enter = scaleIn(
-                    animationSpec = spring(
-                        dampingRatio = 0.6f,
-                        stiffness = Spring.StiffnessMediumLow
-                    )
-                ) + fadeIn()
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    TrophyIcon(
-                        size = 120.dp,
-                        color = TierBronze,
-                        modifier = Modifier.shadow(
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Trophy slides up
+                TrophyIcon(
+                    size = 120.dp,
+                    color = TierBronze,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            translationY = trophyOffset.value * density
+                            alpha = trophyAlpha.value
+                        }
+                        .shadow(
                             elevation = 20.dp,
                             shape = CircleShape,
                             ambientColor = Color(0xFFF97316).copy(alpha = 0.3f)
                         )
-                    )
+                )
 
-                    Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
 
+                // Text fades in after trophy
+                Column(
+                    modifier = Modifier.graphicsLayer { alpha = textAlpha.value },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         text = "Welcome to Leagues",
                         style = MaterialTheme.typography.headlineMedium,
@@ -547,18 +586,26 @@ private fun LeaderboardIntroContent(onDismiss: () -> Unit) {
 
         Spacer(Modifier.weight(0.5f))
 
-        // Animated leaderboard list
-        androidx.compose.animation.AnimatedVisibility(
-            visible = showList,
-            enter = fadeIn(animationSpec = tween(500))
-        ) {
-            Column {
-                // Dummy entries
-                dummyEntries.forEach { (name, points) ->
+        // Staggered leaderboard entries
+        Column {
+            dummyEntries.forEachIndexed { index, (name, points) ->
+                Box(
+                    modifier = Modifier.graphicsLayer {
+                        alpha = entryAlphas[index].value
+                        translationY = entryOffsets[index].value * density
+                    }
+                ) {
                     IntroEntryRow(username = name, points = points)
                 }
+            }
 
-                // Highlighted user entry
+            // Highlighted "Me" row (last staggered item)
+            Box(
+                modifier = Modifier.graphicsLayer {
+                    alpha = entryAlphas[totalItems - 1].value
+                    translationY = entryOffsets[totalItems - 1].value * density
+                }
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -602,20 +649,25 @@ private fun LeaderboardIntroContent(onDismiss: () -> Unit) {
 
         Spacer(Modifier.weight(1f))
 
-        // Nice! button
-        if (showList) {
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PresentBlue),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Nice!", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        // Nice! button fades in after entries
+        AnimatedVisibility(
+            visible = showButton,
+            enter = fadeIn(tween(400))
+        ) {
+            Column {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(52.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PresentBlue),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Nice!", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(Modifier.height(24.dp))
             }
-            Spacer(Modifier.height(24.dp))
         }
     }
 }
