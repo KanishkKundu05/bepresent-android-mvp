@@ -94,7 +94,7 @@ fun RatingScreen(onContinue: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "\"This app saved my\nrelationship with my phone\"",
+                        text = "\"Thank you for freeing me\nfrom this device.\"",
                         style = OnboardingTypography.subLabel,
                         color = OnboardingTokens.NeutralBlack,
                         textAlign = TextAlign.Center

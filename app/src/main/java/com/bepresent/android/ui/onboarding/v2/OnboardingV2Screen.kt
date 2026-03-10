@@ -181,11 +181,14 @@ private fun ScreenRouter(
             onPermissionResult = { granted -> viewModel.trackNotificationPermissionResult(granted) }
         )
         is OnboardingScreenType.SevenDayChallenge -> SevenDayChallengeScreen(
-            yearsOnPhone = viewModel.yearsOnPhone,
+            hoursSaved = viewModel.hoursSavedEstimate,
             onAccepted = { viewModel.advance() }
         )
         is OnboardingScreenType.Paywall -> PaywallScreen(
             onSubscribed = { viewModel.advance() }
+        )
+        is OnboardingScreenType.WelcomeSubscription -> WelcomeSubscriptionScreen(
+            onContinue = { viewModel.advance() }
         )
         is OnboardingScreenType.PostPaywallMessage -> PostPaywallMessageScreen(
             message = screen.message

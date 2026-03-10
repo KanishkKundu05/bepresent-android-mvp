@@ -47,15 +47,14 @@ import com.bepresent.android.ui.onboarding.v2.components.SlideToConfirmButton
 import kotlinx.coroutines.delay
 
 private val CHALLENGE_BULLETS = listOf(
-    "Build a consistent screen time habit",
-    "Track your daily progress with streaks",
-    "Compete on the leaderboard",
-    "Find your ideal app blocking schedule"
+    "Reduce your screen time by 50% and save *over 2 hours every day*",
+    "Be more present and *focus* on *what truly matters*",
+    "Develop habits that will save you *5+ years* of your life"
 )
 
 @Composable
 fun SevenDayChallengeScreen(
-    yearsOnPhone: Int,
+    hoursSaved: Int,
     onAccepted: () -> Unit
 ) {
     var keyframe by remember { mutableIntStateOf(0) }
@@ -83,7 +82,6 @@ fun SevenDayChallengeScreen(
         delay(1160)
         keyframe = 4  // show subtitle
 
-        // Stagger bullet appearances
         for (i in 1..CHALLENGE_BULLETS.size) {
             delay(952)
             visibleBullets = i
@@ -92,8 +90,6 @@ fun SevenDayChallengeScreen(
         delay(1429)
         showSlider = true
     }
-
-    val hoursSaved = yearsOnPhone * 2 // rough estimate of hours per day savings
 
     Column(
         modifier = Modifier
@@ -158,8 +154,8 @@ fun SevenDayChallengeScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = message,
-                                style = OnboardingTypography.p3,
+                                text = formatChallengeMessage(message),
+                                style = OnboardingTypography.p2,
                                 color = OnboardingTokens.Neutral900
                             )
                         }
@@ -195,7 +191,7 @@ fun SevenDayChallengeScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Win back ${hoursSaved / 2}+ hours every day",
+                        text = "Win back $hoursSaved+ hours every day",
                         style = OnboardingTypography.label,
                         color = OnboardingTokens.Neutral900
                     )
@@ -209,6 +205,32 @@ fun SevenDayChallengeScreen(
                     onComplete = onAccepted
                 )
             }
+        }
+    }
+}
+
+private fun formatChallengeMessage(message: String) = buildAnnotatedString {
+    val baseStyle = SpanStyle(
+        color = OnboardingTokens.Neutral900,
+        fontFamily = OnboardingTypography.p2.fontFamily,
+        fontSize = OnboardingTypography.p2.fontSize,
+        fontWeight = OnboardingTypography.p2.fontWeight
+    )
+    val boldStyle = SpanStyle(
+        color = OnboardingTokens.NeutralBlack,
+        fontFamily = OnboardingTypography.p2.fontFamily,
+        fontSize = OnboardingTypography.p2.fontSize,
+        fontWeight = FontWeight.Bold
+    )
+
+    var bold = false
+    val parts = message.split("*")
+    parts.forEachIndexed { index, part ->
+        withStyle(if (bold) boldStyle else baseStyle) {
+            append(part)
+        }
+        if (index != parts.lastIndex) {
+            bold = !bold
         }
     }
 }

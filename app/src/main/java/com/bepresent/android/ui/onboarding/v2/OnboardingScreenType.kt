@@ -25,6 +25,7 @@ sealed class OnboardingScreenType {
     data object NotificationPermission : OnboardingScreenType()
     data object SevenDayChallenge : OnboardingScreenType()
     data object Paywall : OnboardingScreenType()
+    data object WelcomeSubscription : OnboardingScreenType()
     data class PostPaywallMessage(val message: String) : OnboardingScreenType()
     data object ChooseUsername : OnboardingScreenType()
     data object SelectApps : OnboardingScreenType()
@@ -48,6 +49,16 @@ val OnboardingScreenType.showProgressBar: Boolean
         is OnboardingScreenType.UserWhy,
         is OnboardingScreenType.UserHow,
         is OnboardingScreenType.UserWhat,
+        is OnboardingScreenType.Loading,
+        is OnboardingScreenType.ShockPage1,
+        is OnboardingScreenType.ShockPage2,
+        is OnboardingScreenType.Rating,
+        is OnboardingScreenType.PermissionsSetup,
+        is OnboardingScreenType.SuggestedIntention,
+        is OnboardingScreenType.NotificationPermission,
+        is OnboardingScreenType.SevenDayChallenge,
+        is OnboardingScreenType.WelcomeSubscription,
+        is OnboardingScreenType.PostPaywallMessage,
         is OnboardingScreenType.Paywall -> false
         else -> true
     }
@@ -75,6 +86,7 @@ val OnboardingScreenType.buttonConfig: ButtonConfig
         is OnboardingScreenType.NotificationPermission -> ButtonConfig.Hidden
         is OnboardingScreenType.SevenDayChallenge -> ButtonConfig.Hidden
         is OnboardingScreenType.Paywall -> ButtonConfig.Hidden
+        is OnboardingScreenType.WelcomeSubscription -> ButtonConfig.Hidden
         is OnboardingScreenType.PostPaywallMessage -> ButtonConfig.Full
         is OnboardingScreenType.ChooseUsername -> ButtonConfig.Hidden
         is OnboardingScreenType.SelectApps -> ButtonConfig.Hidden
@@ -116,6 +128,7 @@ val OnboardingScreenType.gradientType: GradientType
         is OnboardingScreenType.NotificationPermission -> GradientType.White
         is OnboardingScreenType.SevenDayChallenge -> GradientType.White
         is OnboardingScreenType.Paywall -> GradientType.White
+        is OnboardingScreenType.WelcomeSubscription -> GradientType.Blue
         is OnboardingScreenType.PostPaywallMessage -> GradientType.Blue
         is OnboardingScreenType.ChooseUsername -> GradientType.White
         is OnboardingScreenType.SelectApps -> GradientType.White
@@ -181,8 +194,9 @@ fun buildOnboardingScreens(): List<OnboardingScreenType> = listOf(
     OnboardingScreenType.NotificationPermission,
     OnboardingScreenType.SevenDayChallenge,
     OnboardingScreenType.Paywall,
+    OnboardingScreenType.WelcomeSubscription,
     OnboardingScreenType.PostPaywallMessage(
-        message = "You're all set! Let's start your journey to less screen time."
+        message = "Let's get set up so BePresent can help you stop scrolling and start living."
     ),
     OnboardingScreenType.ChooseUsername,
     OnboardingScreenType.SelectApps,

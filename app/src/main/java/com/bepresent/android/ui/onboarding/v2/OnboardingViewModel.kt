@@ -205,6 +205,12 @@ class OnboardingViewModel @Inject constructor(
     val yearsBack: Int
         get() = calculateYearsBack(yearsOnPhone)
 
+    val hoursSavedEstimate: Int
+        get() {
+            val screenTimeAnswer = _answers.value["ScreenTime"] ?: return 2
+            return (screenTimeAnswerToHours(screenTimeAnswer) / 2f).toInt().coerceAtLeast(1)
+        }
+
     // ── Persistence ──
 
     private suspend fun saveProgress() {

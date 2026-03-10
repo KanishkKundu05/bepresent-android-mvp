@@ -5,15 +5,14 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,64 +47,67 @@ fun NotificationPermissionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = OnboardingTokens.ScreenHorizontalPadding),
+            .systemBarsPadding()
+            .padding(top = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.weight(1f))
 
-        Image(
-            painter = painterResource(R.drawable.notifications_mask),
-            contentDescription = null,
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.6f)
-                .height(200.dp),
-            contentScale = ContentScale.Fit
-        )
+                .fillMaxWidth()
+                .padding(horizontal = OnboardingTokens.ScreenHorizontalPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Enable Screen Time\nReminders",
+                style = OnboardingTypography.h2,
+                color = OnboardingTokens.NeutralBlack,
+                textAlign = TextAlign.Center
+            )
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(35.dp))
 
-        Text(
-            text = "Stay on Track with\nNotifications",
-            style = OnboardingTypography.h1,
-            color = OnboardingTokens.NeutralBlack,
-            textAlign = TextAlign.Center
-        )
+            Image(
+                painter = painterResource(R.drawable.notifications_mask),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp),
+                contentScale = ContentScale.Fit
+            )
+        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(25.dp))
 
-        Text(
-            text = "Get reminders for your daily streak, session goals, and challenge progress.",
-            style = OnboardingTypography.p2,
-            color = OnboardingTokens.Neutral800,
-            textAlign = TextAlign.Center
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = OnboardingTokens.ScreenHorizontalPadding)
+        ) {
+            OnboardingContinueButton(
+                title = "Enable Notifications",
+                appearance = OnboardingButtonAppearance.Secondary,
+                onClick = {
+                    onEnableClicked()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        onPermissionResult(true)
+                        onComplete()
+                    }
+                }
+            )
 
-        Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        OnboardingContinueButton(
-            title = "Enable Notifications",
-            appearance = OnboardingButtonAppearance.Primary,
-            onClick = {
-                onEnableClicked()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    onPermissionResult(true)
+            OnboardingContinueButton(
+                title = "Maybe Later",
+                appearance = OnboardingButtonAppearance.Plain,
+                onClick = {
+                    onMaybeLater()
                     onComplete()
                 }
-            },
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        TextButton(onClick = {
-            onMaybeLater()
-            onComplete()
-        }) {
-            Text(
-                "Maybe Later",
-                style = OnboardingTypography.label,
-                color = OnboardingTokens.Neutral800
             )
         }
 

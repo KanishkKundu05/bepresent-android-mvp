@@ -21,7 +21,8 @@ import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
 enum class OnboardingButtonAppearance {
     Primary,         // Brand blue bg, white text
     Secondary,       // Black bg, white text, with drop shadow
-    SecondaryShadow  // Black bg + darker shadow offset
+    SecondaryShadow, // Black bg + darker shadow offset
+    Plain            // Text-only button
 }
 
 @Composable
@@ -37,14 +38,19 @@ fun OnboardingContinueButton(
         OnboardingButtonAppearance.Primary -> OnboardingTokens.BrandPrimary
         OnboardingButtonAppearance.Secondary -> OnboardingTokens.NeutralBlack
         OnboardingButtonAppearance.SecondaryShadow -> OnboardingTokens.NeutralBlack
+        OnboardingButtonAppearance.Plain -> Color.Transparent
     }
 
-    val contentColor = OnboardingTokens.NeutralWhite
+    val contentColor = when (appearance) {
+        OnboardingButtonAppearance.Plain -> OnboardingTokens.NeutralBlack
+        else -> OnboardingTokens.NeutralWhite
+    }
 
     val dropShadowColor = when (appearance) {
         OnboardingButtonAppearance.Primary -> OnboardingTokens.BrandDropShadow
         OnboardingButtonAppearance.Secondary -> null
         OnboardingButtonAppearance.SecondaryShadow -> OnboardingTokens.Neutral800
+        OnboardingButtonAppearance.Plain -> null
     }
 
     Box(modifier = modifier.fillMaxWidth()) {
@@ -71,16 +77,33 @@ fun OnboardingContinueButton(
             onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(OnboardingTokens.ButtonHeight),
+                .height(if (appearance == OnboardingButtonAppearance.Plain) 40.dp else OnboardingTokens.ButtonHeight),
             shape = CircleShape,
             colors = ButtonDefaults.buttonColors(
                 containerColor = backgroundColor,
                 contentColor = contentColor,
-                disabledContainerColor = backgroundColor.copy(alpha = 0.2f),
+                disabledContainerColor = if (appearance == OnboardingButtonAppearance.Plain) {
+                    Color.Transparent
+                } else {
+                    backgroundColor.copy(alpha = 0.2f)
+                },
                 disabledContentColor = contentColor.copy(alpha = 0.2f)
             ),
             enabled = enabled && !isLoading,
-            contentPadding = PaddingValues(horizontal = 24.dp)
+            elevation = if (appearance == OnboardingButtonAppearance.Plain) {
+                ButtonDefaults.buttonElevation(
+                    defaultElevation = 0.dp,
+                    pressedElevation = 0.dp,
+                    disabledElevation = 0.dp
+                )
+            } else {
+                ButtonDefaults.buttonElevation()
+            },
+            contentPadding = if (appearance == OnboardingButtonAppearance.Plain) {
+                PaddingValues(0.dp)
+            } else {
+                PaddingValues(horizontal = 24.dp)
+            }
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
@@ -91,7 +114,11 @@ fun OnboardingContinueButton(
             } else {
                 Text(
                     text = title,
-                    style = OnboardingTypography.p1
+                    style = if (appearance == OnboardingButtonAppearance.Plain) {
+                        OnboardingTypography.label
+                    } else {
+                        OnboardingTypography.p1
+                    }
                 )
             }
         }
