@@ -148,7 +148,7 @@ private fun MainAppContent(analyticsManager: AnalyticsManager, preferencesManage
         || bottomTabs.any { it.route == currentRoute }
 
     Scaffold(
-        containerColor = Color.Transparent,
+        containerColor = Color.White,
         bottomBar = {}
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {

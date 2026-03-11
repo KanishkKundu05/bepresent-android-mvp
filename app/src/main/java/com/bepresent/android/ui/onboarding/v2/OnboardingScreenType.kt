@@ -174,14 +174,14 @@ fun buildOnboardingScreens(): List<OnboardingScreenType> = listOf(
         title = "How much screen time do you average per day?",
         emoji = "\uD83D\uDCF1",
         options = listOf(
-            QuestionOption("Less than 2 hours", "\u23F0"),
+            QuestionOption("1-2 hours", "\u23F0"),
             QuestionOption("2-3 hours", "\uD83D\uDCCA"),
             QuestionOption("3-4 hours", "\uD83D\uDCCA"),
             QuestionOption("4-5 hours", "\uD83D\uDCCA"),
             QuestionOption("5-6 hours", "\uD83D\uDCCA"),
-            QuestionOption("6-8 hours", "\uD83D\uDE31"),
-            QuestionOption("8-10 hours", "\uD83E\uDD2F"),
-            QuestionOption("10+ hours", "\uD83D\uDCA3")
+            QuestionOption("6-7 hours", "\uD83D\uDCCA"),
+            QuestionOption("7-8 hours", "\uD83D\uDE31"),
+            QuestionOption("Over 8 hours", "\uD83D\uDCA3")
         ),
         questionType = QuestionType.ScreenTime
     ),

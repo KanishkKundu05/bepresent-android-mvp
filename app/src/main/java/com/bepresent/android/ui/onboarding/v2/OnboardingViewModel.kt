@@ -197,18 +197,16 @@ class OnboardingViewModel @Inject constructor(
     val yearsOnPhone: Int
         get() {
             val screenTimeAnswer = _answers.value["ScreenTime"] ?: return 8
-            val ageAnswer = _answers.value["Age"] ?: "25-34"
-            val dailyHours = screenTimeAnswerToHours(screenTimeAnswer)
-            return calculateYearsOnPhone(dailyHours, ageAnswer)
+            return calculateYearsOnPhone(screenTimeAnswer)
         }
 
-    val yearsBack: Int
+    val yearsBack: String
         get() = calculateYearsBack(yearsOnPhone)
 
     val hoursSavedEstimate: Int
         get() {
             val screenTimeAnswer = _answers.value["ScreenTime"] ?: return 2
-            return (screenTimeAnswerToHours(screenTimeAnswer) / 2f).toInt().coerceAtLeast(1)
+            return (screenTimeAnswerToHours(screenTimeAnswer) / 2).coerceAtLeast(1)
         }
 
     // ── Persistence ──

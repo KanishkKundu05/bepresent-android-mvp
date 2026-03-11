@@ -90,49 +90,63 @@ fun OnboardingV2Screen(
             }
 
             // Screen content area — both screens visible during transitions
+            // Button is inside each sliding container so it slides with its screen
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
                 // Current screen (slides out during transition)
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .offset { IntOffset((currentOffset * screenWidthPx).roundToInt(), 0) }
                 ) {
-                    ScreenRouter(
-                        screen = currentScreen,
-                        viewModel = viewModel
-                    )
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        ScreenRouter(
+                            screen = currentScreen,
+                            viewModel = viewModel
+                        )
+                    }
+                    if (currentScreen.buttonConfig == ButtonConfig.Full) {
+                        OnboardingContinueButton(
+                            title = currentScreen.buttonTitle,
+                            onClick = { viewModel.advance() },
+                            enabled = !isAnimating,
+                            modifier = Modifier.padding(
+                                horizontal = OnboardingTokens.ScreenHorizontalPadding,
+                                vertical = 16.dp
+                            )
+                        )
+                    }
                 }
 
                 // Incoming screen (slides in during transition)
                 if (incomingScreen != null) {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .offset { IntOffset((incomingOffsetValue * screenWidthPx).roundToInt(), 0) }
                     ) {
-                        ScreenRouter(
-                            screen = incomingScreen,
-                            viewModel = viewModel
-                        )
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            ScreenRouter(
+                                screen = incomingScreen,
+                                viewModel = viewModel
+                            )
+                        }
+                        if (incomingScreen.buttonConfig == ButtonConfig.Full) {
+                            OnboardingContinueButton(
+                                title = incomingScreen.buttonTitle,
+                                onClick = { viewModel.advance() },
+                                enabled = false,
+                                modifier = Modifier.padding(
+                                    horizontal = OnboardingTokens.ScreenHorizontalPadding,
+                                    vertical = 16.dp
+                                )
+                            )
+                        }
                     }
                 }
-            }
-
-            // Bottom button (if this screen has one)
-            if (displayScreen.buttonConfig == ButtonConfig.Full) {
-                OnboardingContinueButton(
-                    title = displayScreen.buttonTitle,
-                    onClick = { viewModel.advance() },
-                    enabled = !isAnimating,
-                    modifier = Modifier.padding(
-                        horizontal = OnboardingTokens.ScreenHorizontalPadding,
-                        vertical = 16.dp
-                    )
-                )
             }
         }
     }

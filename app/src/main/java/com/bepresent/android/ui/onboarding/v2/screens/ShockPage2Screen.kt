@@ -16,7 +16,7 @@ import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
 import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
 
 @Composable
-fun ShockPage2Screen(yearsBack: Int) {
+fun ShockPage2Screen(yearsBack: String) {
     Column(
         modifier = Modifier
             .fillMaxSize()
