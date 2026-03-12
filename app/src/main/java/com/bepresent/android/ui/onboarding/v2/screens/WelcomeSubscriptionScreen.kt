@@ -43,6 +43,7 @@ fun WelcomeSubscriptionScreen(onContinue: () -> Unit) {
     var showGratitudeText by remember { mutableStateOf(false) }
     var showImage by remember { mutableStateOf(false) }
     var showButton by remember { mutableStateOf(false) }
+    var showReminderSheet by remember { mutableStateOf(false) }
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.confetti_animation))
 
     LaunchedEffect(Unit) {
@@ -60,6 +61,16 @@ fun WelcomeSubscriptionScreen(onContinue: () -> Unit) {
             .fillMaxSize()
             .systemBarsPadding()
     ) {
+        if (showReminderSheet) {
+            TrialReminderSheet(
+                onDismiss = { showReminderSheet = false },
+                onContinue = {
+                    showReminderSheet = false
+                    onContinue()
+                }
+            )
+        }
+
         LottieAnimation(
             composition = composition,
             iterations = LottieConstants.IterateForever,
@@ -134,7 +145,7 @@ fun WelcomeSubscriptionScreen(onContinue: () -> Unit) {
                 OnboardingContinueButton(
                     title = "Continue",
                     appearance = OnboardingButtonAppearance.Primary,
-                    onClick = onContinue
+                    onClick = { showReminderSheet = true }
                 )
             }
         }
