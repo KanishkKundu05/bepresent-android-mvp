@@ -157,16 +157,16 @@ fun buildOnboardingScreens(): List<OnboardingScreenType> = listOf(
     OnboardingScreenType.UserHow,
     OnboardingScreenType.UserWhat,
     OnboardingScreenType.Question(
-        title = "What's your age?",
+        title = "How old are you?",
         emoji = "\uD83D\uDC64",
         options = listOf(
-            QuestionOption("Under 18", "\uD83E\uDDD2"),
-            QuestionOption("18-24", "\uD83E\uDDD1"),
-            QuestionOption("25-34", "\uD83D\uDE4B"),
-            QuestionOption("35-44", "\uD83D\uDC68"),
-            QuestionOption("45-54", "\uD83E\uDDD4"),
-            QuestionOption("55-64", "\uD83D\uDC74"),
-            QuestionOption("65+", "\uD83D\uDC75")
+            QuestionOption("Under 18"),
+            QuestionOption("18-24"),
+            QuestionOption("25-29"),
+            QuestionOption("30-34"),
+            QuestionOption("35-44"),
+            QuestionOption("45-54"),
+            QuestionOption("55 and over")
         ),
         questionType = QuestionType.Age
     ),
