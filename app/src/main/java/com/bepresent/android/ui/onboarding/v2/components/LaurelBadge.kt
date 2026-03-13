@@ -1,10 +1,13 @@
 package com.bepresent.android.ui.onboarding.v2.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,25 +29,53 @@ fun LaurelBadge(
     modifier: Modifier = Modifier,
     laurelSize: Dp = 60.dp,
     spacing: Dp = 16.dp,
+    expanded: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(R.drawable.left_laurel),
-            contentDescription = null,
-            modifier = Modifier.height(laurelSize)
-        )
-        Spacer(modifier = Modifier.width(spacing))
-        content()
-        Spacer(modifier = Modifier.width(spacing))
-        Image(
-            painter = painterResource(R.drawable.right_laurel),
-            contentDescription = null,
-            modifier = Modifier.height(laurelSize)
-        )
+    if (expanded) {
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.left_laurel),
+                contentDescription = null,
+                modifier = Modifier.height(laurelSize)
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = spacing),
+                contentAlignment = Alignment.Center
+            ) {
+                content()
+            }
+            Image(
+                painter = painterResource(R.drawable.right_laurel),
+                contentDescription = null,
+                modifier = Modifier.height(laurelSize)
+            )
+        }
+    } else {
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.left_laurel),
+                contentDescription = null,
+                modifier = Modifier.height(laurelSize)
+            )
+            Spacer(modifier = Modifier.width(spacing))
+            content()
+            Spacer(modifier = Modifier.width(spacing))
+            Image(
+                painter = painterResource(R.drawable.right_laurel),
+                contentDescription = null,
+                modifier = Modifier.height(laurelSize)
+            )
+        }
     }
 }
 
@@ -55,9 +86,17 @@ fun LaurelBadge(
 fun LaurelStatBadge(
     headline: String,
     body: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    laurelSize: Dp = 60.dp,
+    spacing: Dp = 16.dp,
+    expanded: Boolean = false
 ) {
-    LaurelBadge(modifier = modifier) {
+    LaurelBadge(
+        modifier = modifier,
+        laurelSize = laurelSize,
+        spacing = spacing,
+        expanded = expanded
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = headline,

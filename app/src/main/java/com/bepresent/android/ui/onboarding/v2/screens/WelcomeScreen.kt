@@ -1,11 +1,11 @@
 package com.bepresent.android.ui.onboarding.v2.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,10 +16,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.bepresent.android.R
 import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
 import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
 import com.bepresent.android.ui.onboarding.v2.components.LaurelBadge
@@ -44,26 +42,44 @@ fun WelcomeScreen() {
             // Badge 1: Screen time reduction
             LaurelStatBadge(
                 headline = "15 Hour",
-                body = "Weekly Screen Time\nReduction"
+                body = "Weekly Screen Time\nReduction",
+                modifier = Modifier.fillMaxWidth(),
+                laurelSize = 72.dp,
+                spacing = 20.dp,
+                expanded = true
             )
 
             // Badge 2: Users count
             LaurelStatBadge(
-                headline = "567K+",
-                body = "Happy Users"
+                headline = "500,000",
+                body = "Satisfied Users",
+                modifier = Modifier.fillMaxWidth(),
+                laurelSize = 72.dp,
+                spacing = 20.dp,
+                expanded = true
             )
 
             // Badge 3: 5-star rating
-            LaurelBadge {
+            LaurelBadge(
+                modifier = Modifier.fillMaxWidth(),
+                laurelSize = 72.dp,
+                spacing = 20.dp,
+                expanded = true
+            ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(R.drawable.five_stars),
-                        contentDescription = "5 stars",
-                        modifier = Modifier.height(20.dp)
-                    )
+                    Row(horizontalArrangement = Arrangement.Center) {
+                        repeat(5) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = null,
+                                tint = OnboardingTokens.YellowPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "\"Life changing app\"",
+                        text = "\"thank you for freeing me from this device\"",
                         style = OnboardingTypography.subLabel,
                         color = OnboardingTokens.NeutralBlack,
                         textAlign = TextAlign.Center
@@ -91,7 +107,7 @@ fun WelcomeScreen() {
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(0.75f))
         // Bottom space for the continue button
         Spacer(modifier = Modifier.height(80.dp))
     }
