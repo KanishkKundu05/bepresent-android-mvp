@@ -1,5 +1,6 @@
 package com.bepresent.android.ui.onboarding.v2
 
+import com.bepresent.android.ui.onboarding.v2.components.OnboardingButtonAppearance
 import com.bepresent.android.ui.onboarding.v2.animation.ScreenAnimation
 
 /**
@@ -103,6 +104,13 @@ val OnboardingScreenType.buttonTitle: String
         is OnboardingScreenType.NotificationPermission -> "Enable Notifications"
         is OnboardingScreenType.PostPaywallMessage -> "Continue"
         else -> "Continue"
+    }
+
+/** Button appearance for screens that show a button. */
+val OnboardingScreenType.buttonAppearance: OnboardingButtonAppearance
+    get() = when (this) {
+        is OnboardingScreenType.ShockPage2 -> OnboardingButtonAppearance.Primary
+        else -> OnboardingButtonAppearance.SecondaryShadow
     }
 
 /** Background gradient type for each screen. */

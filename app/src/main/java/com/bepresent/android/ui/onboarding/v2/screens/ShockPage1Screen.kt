@@ -13,17 +13,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
@@ -34,17 +38,36 @@ import com.bepresent.android.ui.onboarding.v2.components.OnboardingContinueButto
 import com.bepresent.android.ui.onboarding.v2.components.OnboardingButtonAppearance
 import kotlinx.coroutines.delay
 
+private const val EXPLODING_HEAD_HAPTIC_PROGRESS = 0.1f
+
 @Composable
 fun ShockPage1Screen(
     yearsOnPhone: Int,
     onContinue: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     var showButton by remember { mutableStateOf(false) }
+    var lastAnimationProgress by remember { mutableFloatStateOf(0f) }
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.exploding_head))
+    val animationProgress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever,
+        speed = 0.7f
+    )
 
     LaunchedEffect(Unit) {
         delay(2000)
         showButton = true
+    }
+
+    LaunchedEffect(animationProgress) {
+        val crossedBlastMoment =
+            lastAnimationProgress < EXPLODING_HEAD_HAPTIC_PROGRESS &&
+                animationProgress >= EXPLODING_HEAD_HAPTIC_PROGRESS
+        if (crossedBlastMoment) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+        lastAnimationProgress = animationProgress
     }
 
     Box(
@@ -61,8 +84,7 @@ fun ShockPage1Screen(
             // Lottie animation
             LottieAnimation(
                 composition = composition,
-                iterations = LottieConstants.IterateForever,
-                speed = 0.7f,
+                progress = { animationProgress },
                 modifier = Modifier.size(145.dp)
             )
 

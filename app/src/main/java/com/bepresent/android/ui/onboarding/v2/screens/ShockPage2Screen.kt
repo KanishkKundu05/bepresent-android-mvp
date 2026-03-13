@@ -26,6 +26,7 @@ fun ShockPage2Screen(yearsBack: String) {
         verticalArrangement = Arrangement.Center
     ) {
         Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(18.dp))
 
         Text(
             text = "...but the good news is,\nwe'll help you get",

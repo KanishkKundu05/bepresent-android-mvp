@@ -111,6 +111,7 @@ fun OnboardingV2Screen(
                     if (currentScreen.buttonConfig == ButtonConfig.Full) {
                         OnboardingContinueButton(
                             title = currentScreen.buttonTitle,
+                            appearance = currentScreen.buttonAppearance,
                             onClick = { viewModel.advance() },
                             enabled = !isAnimating,
                             modifier = Modifier.padding(
@@ -137,6 +138,7 @@ fun OnboardingV2Screen(
                         if (incomingScreen.buttonConfig == ButtonConfig.Full) {
                             OnboardingContinueButton(
                                 title = incomingScreen.buttonTitle,
+                                appearance = incomingScreen.buttonAppearance,
                                 onClick = { viewModel.advance() },
                                 enabled = false,
                                 modifier = Modifier.padding(
