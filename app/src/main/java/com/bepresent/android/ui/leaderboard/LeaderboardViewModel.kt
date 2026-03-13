@@ -46,6 +46,11 @@ class LeaderboardViewModel @Inject constructor(
 
             val entries = manager.getOrderedLeaderboardEntries(username, weeklyXp)
             val userRank = manager.getCurrentUserRank(entries, username)
+            val showIntro = !manager.introShown
+
+            if (showIntro) {
+                manager.introShown = true
+            }
 
             _uiState.value = LeaderboardUiState(
                 currentTier = manager.currentTier,
@@ -55,7 +60,7 @@ class LeaderboardViewModel @Inject constructor(
                 userRank = userRank,
                 maxPromotionRank = manager.maxPromotionRank(manager.currentTier),
                 minDemotionRank = manager.minDemotionRank(manager.currentTier),
-                showIntro = !manager.introShown,
+                showIntro = showIntro,
                 showResults = manager.showResults.value,
                 resultsInfo = manager.resultsInfo.value
             )
@@ -94,8 +99,7 @@ class LeaderboardViewModel @Inject constructor(
         }
     }
 
-    fun markIntroShown() {
-        manager.introShown = true
+    fun dismissIntro() {
         _uiState.value = _uiState.value.copy(showIntro = false)
     }
 }

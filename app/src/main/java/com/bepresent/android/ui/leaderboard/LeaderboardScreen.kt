@@ -72,7 +72,7 @@ fun LeaderboardScreen(
 
     when {
         state.showIntro -> LeaderboardIntroContent(
-            onDismiss = { viewModel.markIntroShown() }
+            onDismiss = { viewModel.dismissIntro() }
         )
         state.showResults && state.resultsInfo != null -> LeaderboardResultsContent(
             resultsInfo = state.resultsInfo!!,
