@@ -26,6 +26,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
@@ -33,6 +35,7 @@ import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
 import kotlinx.coroutines.delay
 
 private const val LOADING_DURATION_MS = 3000L
+private const val LOADING_HAPTIC_STEPS = 10
 private val SUBHEADLINES = listOf(
     "Analyzing your screen time habits...",
     "Building your personalized plan...",
@@ -41,9 +44,11 @@ private val SUBHEADLINES = listOf(
 
 @Composable
 fun LoadingScreen(onComplete: () -> Unit) {
+    val haptic = LocalHapticFeedback.current
     var targetProgress by remember { mutableFloatStateOf(0f) }
     var currentSubheadlineIndex by remember { mutableIntStateOf(0) }
     var isTransitioning by remember { mutableStateOf(false) }
+    var lastHapticStep by remember { mutableIntStateOf(0) }
 
     val animatedProgress by animateFloatAsState(
         targetValue = targetProgress,
@@ -67,6 +72,14 @@ fun LoadingScreen(onComplete: () -> Unit) {
             delay(150)
             currentSubheadlineIndex = i
             isTransitioning = false
+        }
+    }
+
+    LaunchedEffect(animatedProgress) {
+        val currentStep = (animatedProgress * LOADING_HAPTIC_STEPS).toInt()
+        if (currentStep > lastHapticStep) {
+            lastHapticStep = currentStep
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         }
     }
 
