@@ -3,6 +3,7 @@ package com.bepresent.android.ui.onboarding.v2.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bepresent.android.ui.onboarding.v2.OnboardingTokens
 import com.bepresent.android.ui.onboarding.v2.OnboardingTypography
@@ -37,6 +39,7 @@ fun ReviewCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .fillMaxHeight()
             .shadow(
                 elevation = 35.dp,
                 shape = RoundedCornerShape(16.dp),
@@ -74,7 +77,10 @@ fun ReviewCard(
             Text(
                 text = review.title,
                 style = OnboardingTypography.label,
-                color = OnboardingTokens.NeutralBlack
+                color = OnboardingTokens.NeutralBlack,
+                minLines = 1,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -82,7 +88,10 @@ fun ReviewCard(
             Text(
                 text = review.body,
                 style = OnboardingTypography.label2,
-                color = OnboardingTokens.Neutral900
+                color = OnboardingTokens.Neutral900,
+                minLines = 3,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
